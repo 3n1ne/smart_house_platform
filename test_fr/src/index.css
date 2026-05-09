@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,900;1,6..72,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-background: #F9F7F2;
+  --color-surface: #FFFFFF;
+  --color-surface-dim: #EAE8E0;
+  --color-surface-variant: #EAE8E0;
+  --color-primary: #D4AF37;
+  --color-primary-container: #1A1A1A;
+  --color-secondary: #333333;
+  --color-outline: #1A1A1A;
+  --color-outline-variant: rgba(26, 26, 26, 0.1);
+  --color-on-background: #1A1A1A;
+  --color-on-surface-variant: rgba(26, 26, 26, 0.5);
+
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Newsreader", ui-serif, Georgia, serif;
+
+  --radius-xl: 0rem; /* Editorial themes often prefer sharp corners or minimal rounding */
+  --radius-lg: 0rem;
+  --radius-md: 0rem;
+  --radius-default: 0rem;
+
+  --shadow-ambient: 0 4px 24px -4px rgba(26, 26, 26, 0.05);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-sans antialiased;
+  }
+}
+
+.editorial-label {
+  @apply text-[10px] uppercase tracking-[0.3em] font-bold opacity-50;
+}
+
+.editorial-heading {
+  @apply font-serif font-black tracking-[-0.04em] leading-[0.85];
+}
+
+.ambient-shadow {
+  box-shadow: var(--shadow-ambient);
+}
+
+.card-hover {
+  @apply transition-all duration-300;
+}
+
+.card-hover:hover {
+  @apply opacity-80;
+  transform: translateY(-2px);
+}
