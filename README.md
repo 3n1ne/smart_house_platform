@@ -1,33 +1,33 @@
-# Smart Rental System
+# 智能房屋租赁系统
 
-Vue 3 + Flask + MySQL based smart house rental system.
+基于 Vue 3 + Flask + MySQL 的智能房屋租赁系统。
 
-## Structure
+## 项目结构
 
-- `backend/`: Flask backend project
-- `frontend/`: Vue 3 frontend project
-- `docs/`: requirement decomposition, database design, and API notes
+- `backend/`：Flask 后端项目
+- `frontend/`：Vue 3 前端项目
+- `docs/`：需求分解、数据库设计与 API 说明
 
-## Current Progress
+## 当前进度
 
-1. Initial project scaffold completed.
-2. Database design and backend model skeleton completed.
-3. Core REST API contract design completed.
-4. Frontend authentication flow and house browsing pages connected to backend APIs.
-5. Landlord-side house management page connected to house management APIs.
-6. Booking workflow connected across backend APIs and frontend tenant/landlord dashboards.
-7. Contract creation, contract signing, and payment workflow connected across backend APIs and frontend dashboards.
-8. Repair, complaint, report, and monitor workflows connected across backend APIs and role dashboards.
-9. Real house media upload, preview, and deletion connected for landlord-side house management.
-10. Operation logging connected for key write actions and surfaced through the admin monitor overview.
-11. Admin user management connected for role/status/keyword filtering and account enable/disable operations.
-12. News and announcement management connected for landlord/admin publishing and public announcement browsing.
-13. Backend testing infrastructure added with SQLite-based pytest coverage for authentication, house publishing/browsing, and news lifecycle APIs.
-14. Alembic migration baseline added with core schema and role seed data, plus end-to-end rental workflow API coverage.
+1. 初始项目脚手架已完成。
+2. 数据库设计和后端模型骨架已完成。
+3. 核心 REST API 契约设计已完成。
+4. 前端认证流程和房源浏览页面已对接后端 API。
+5. 房东端房源管理页面已对接房源管理 API。
+6. 预约流程已对接后端 API 和前端租客/房东仪表盘。
+7. 合同创建、合同签署和支付流程已对接后端 API 和前端仪表盘。
+8. 维修、投诉、报表和监控流程已对接后端 API 和角色仪表盘。
+9. 房东端房源管理的真实媒体上传、预览和删除已对接。
+10. 关键写操作的操作日志已对接，并通过管理员监控概览展示。
+11. 管理员用户管理已对接角色/状态/关键词筛选和账号启用/禁用操作。
+12. 新闻和公告管理已对接房东/管理员发布和公开公告浏览。
+13. 后端测试基础设施已添加，包含基于 SQLite 的 pytest 覆盖，涵盖认证、房源发布/浏览和新闻生命周期 API。
+14. Alembic 迁移基线已添加，包含核心 schema 和角色种子数据，以及端到端租赁流程 API 覆盖。
 
-## Backend Migrations
+## 后端数据库迁移
 
-Run database migrations from the `backend/` directory:
+从 `backend/` 目录运行数据库迁移：
 
 ```powershell
 $env:FLASK_CONFIG = "production"
@@ -36,12 +36,12 @@ $env:DATABASE_URI = "mysql+pymysql://user:password@host:3306/rent_house"
 ..\.venv\Scripts\flask.exe --app run:app db upgrade
 ```
 
-## Iteration Plan
+## 迭代计划
 
-1. Design the database schema.
-2. Define the REST API contract.
-3. Implement authentication and house management modules.
-4. Implement rental workflow, messaging, and maintenance modules.
-5. Improve reporting, monitoring, and deployment support.
-6. Expand automated tests and add Alembic migration scripts for production schema management.
-7. Add deployment configuration, seed/admin bootstrap strategy, and broader regression coverage.
+1. 设计数据库 schema。
+2. 定义 REST API 契约。
+3. 实现认证和房源管理模块。
+4. 实现租赁流程、消息和维修模块。
+5. 完善报表、监控和部署支持。
+6. 扩展自动化测试并添加 Alembic 迁移脚本用于生产 schema 管理。
+7. 添加部署配置、种子数据/管理员引导策略和更广泛的回归覆盖。

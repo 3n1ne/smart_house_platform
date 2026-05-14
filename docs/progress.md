@@ -1,121 +1,121 @@
-# Development Progress
+# 开发进度
 
-## Current Stage
+## 当前阶段
 
-Project is being developed incrementally. Each completed step updates this document and related design files.
+项目正在逐步开发中。每个完成的步骤都会更新本文档和相关设计文件。
 
-## Step Status
+## 步骤状态
 
-| Step | Status | Description |
+| 步骤 | 状态 | 描述 |
 | --- | --- | --- |
-| 1 | Completed | Build initial project structure |
-| 2 | Completed | Complete database design and backend model skeleton |
-| 3 | Completed | Define REST API contract |
-| 4 | Completed | Implement authentication and house management |
-| 5 | Completed | Implement booking, contract, payment, and messaging |
-| 6 | Completed | Implement repair, complaint, report, and monitor |
-| 7 | Completed | Implement media upload, operation logging, admin users, and news |
-| 8 | Completed | Add backend test infrastructure and initial regression coverage |
-| 9 | Completed | Add Alembic migration baseline and end-to-end rental workflow coverage |
+| 1 | 已完成 | 构建初始项目结构 |
+| 2 | 已完成 | 完成数据库设计和后端模型骨架 |
+| 3 | 已完成 | 定义 REST API 契约 |
+| 4 | 已完成 | 实现认证和房源管理 |
+| 5 | 已完成 | 实现预约、合同、支付和消息 |
+| 6 | 已完成 | 实现维修、投诉、报表和监控 |
+| 7 | 已完成 | 实现媒体上传、操作日志、管理员用户和新闻 |
+| 8 | 已完成 | 添加后端测试基础设施和初始回归覆盖 |
+| 9 | 已完成 | 添加 Alembic 迁移基线和端到端租赁流程覆盖 |
 
-## Step 2 Output
+## 步骤 2 产出
 
-1. Added `docs/database-design.md` to describe core entities, relationships, and fields.
-2. Upgraded backend models from placeholders to actual SQLAlchemy model definitions.
-3. Prepared the project for the next step: API contract design.
+1. 添加了 `docs/database-design.md`，描述核心实体、关系和字段。
+2. 将后端模型从占位符升级为实际的 SQLAlchemy 模型定义。
+3. 为下一步（API 契约设计）做好了项目准备。
 
-## Step 3 Output
+## 步骤 3 产出
 
-1. Added `docs/api-design.md` to define the first-round REST API contract.
-2. Standardized response structure, pagination, permission scope, and suggested error codes.
-3. Clarified the implementation boundary for the next coding step.
+1. 添加了 `docs/api-design.md`，定义第一轮 REST API 契约。
+2. 标准化了响应结构、分页、权限范围和推荐错误码。
+3. 明确了下一编码步骤的实现边界。
 
-## Step 4 Output So Far
+## 步骤 4 截至目前产出
 
-1. Added common response helpers and role-based access control helpers.
-2. Implemented backend APIs for registration, login, current user, profile update, user management, and house management.
-3. Added startup role seeding so the initial role data is available in development.
-4. Added frontend API request scaffolding for auth and house modules.
-5. Added Vite entry page and API proxy configuration for local frontend-backend development.
-6. Implemented frontend auth store, route guards, login/register pages, and house list/detail pages.
-7. Installed frontend dependencies and verified successful Vite production build.
-8. Added landlord house management API and connected landlord dashboard for create, edit, status change, and offline operations.
-9. Added booking module API design and started the booking workflow implementation.
-10. Implemented booking APIs, tenant booking submission from house detail, tenant booking list, and landlord booking processing UI.
-11. Verified booking backend files with `py_compile` and the frontend with a successful Vite build.
-12. Added contract and payment API design, serialization, and backend endpoints.
-13. Extended tenant and landlord dashboards for contract creation, signing, payment listing, and payment completion.
-14. Verified contract/payment backend files with `py_compile` and the frontend with a successful Vite build.
+1. 添加了通用响应辅助函数和基于角色的访问控制辅助函数。
+2. 实现了注册、登录、当前用户、个人资料更新、用户管理和房源管理的后端 API。
+3. 添加了启动时角色种子数据，确保开发环境中有初始角色数据可用。
+4. 添加了认证和房源模块的前端 API 请求脚手架。
+5. 添加了 Vite 入口页面和 API 代理配置，用于本地前后端联调开发。
+6. 实现了前端认证状态管理、路由守卫、登录/注册页面以及房源列表/详情页面。
+7. 安装了前端依赖并验证了 Vite 生产构建成功。
+8. 添加了房东房源管理 API，并连接了房东仪表盘用于创建、编辑、状态变更和下架操作。
+9. 添加了预约模块 API 设计并开始预约流程实现。
+10. 实现了预约 API、租客从房源详情提交预约、租客预约列表以及房东预约处理界面。
+11. 使用 `py_compile` 验证了预约后端文件，前端通过 Vite 构建验证成功。
+12. 添加了合同和支付 API 设计、序列化以及后端端点。
+13. 扩展了租客和房东仪表盘，用于合同创建、签署、支付列表和支付完成。
+14. 使用 `py_compile` 验证了合同/支付后端文件，前端通过 Vite 构建验证成功。
 
-## Step 5 Output
+## 步骤 5 产出
 
-15. Implemented backend messaging APIs for conversation summaries, message history, sending messages, and marking unread messages as read.
-16. Added a tenant-side listing contact form so house inquiries can start directly from the house detail page.
-17. Added a shared landlord/tenant dashboard message center with unread counts as the current notification flow.
-18. Updated API documentation for the new messaging module.
+15. 实现了后端消息 API，包括会话摘要、消息历史、发送消息和标记未读消息为已读。
+16. 添加了租客端房源咨询表单，使房源咨询可以直接从房源详情页发起。
+17. 添加了房东/租客共享的仪表盘消息中心，以未读计数作为当前通知流程。
+18. 更新了 API 文档中新增的消息模块。
 
-## Step 6 Output
+## 步骤 6 产出
 
-19. Implemented backend repair APIs for tenant submission, role-scoped listing, and landlord/admin status handling.
-20. Implemented backend complaint APIs for user submission, admin listing, and admin resolution handling.
-21. Added admin report and monitor overview APIs for operational totals, status distribution, service health, and recent logs.
-22. Connected tenant dashboard repair and complaint submission plus progress tracking.
-23. Connected landlord dashboard repair work order handling.
-24. Connected admin dashboard report, monitor, and complaint handling views.
-25. Verified Step 6 backend files with `py_compile` and the frontend with a successful Vite build.
+19. 实现了后端维修 API，包括租客提交、按角色范围列出以及房东/管理员状态处理。
+20. 实现了后端投诉 API，包括用户提交、管理员列出以及管理员处理。
+21. 添加了管理员报表和监控概览 API，用于运营统计、状态分布、服务健康和最近日志。
+22. 连接了租客仪表盘的维修和投诉提交及进度跟踪。
+23. 连接了房东仪表盘的维修工单处理。
+24. 连接了管理员仪表盘的报表、监控和投诉处理视图。
+25. 使用 `py_compile` 验证了步骤 6 的后端文件，前端通过 Vite 构建验证成功。
 
-## Step 7 Output
+## 步骤 7 产出
 
-26. Extended house media API to accept multipart image/video uploads while preserving external media URL support.
-27. Added uploaded media serving through `/uploads/<path>` and configurable `UPLOAD_FOLDER` / `MAX_CONTENT_LENGTH`.
-28. Added house media deletion with local uploaded file cleanup.
-29. Connected landlord dashboard media upload, thumbnail preview, and media deletion controls.
-30. Added Vite proxy support for `/uploads` during local development.
-31. Verified updated backend files with `py_compile` and the frontend with a successful Vite build.
+26. 扩展了房源媒体 API，支持 multipart 图片/视频上传，同时保留外部媒体 URL 支持。
+27. 添加了通过 `/uploads/<path>` 提供上传媒体文件的服务，以及可配置的 `UPLOAD_FOLDER` / `MAX_CONTENT_LENGTH`。
+28. 添加了房源媒体删除及本地上传文件清理功能。
+29. 连接了房东仪表盘的媒体上传、缩略图预览和媒体删除控件。
+30. 添加了本地开发时 Vite 对 `/uploads` 的代理支持。
+31. 使用 `py_compile` 验证了更新后的后端文件，前端通过 Vite 构建验证成功。
 
-## Step 8 Output
+## 步骤 8 产出
 
-32. Added a shared operation logging helper for request IP, user agent, operator, module, action, target, and structured detail.
-33. Connected operation logging to registration, login, profile updates, admin user status updates, house management, media management, booking changes, contract changes, payment completion, message sending, repair handling, and complaint handling.
-34. The admin monitor overview now has real operation data to display through existing recent log output.
-35. Verified backend modules with `compileall`, route registration, and a successful frontend Vite build.
+32. 添加了共享操作日志辅助函数，用于记录请求 IP、User Agent、操作者、模块、操作、目标和结构化详情。
+33. 将操作日志连接到注册、登录、个人资料更新、管理员用户状态更新、房源管理、媒体管理、预约变更、合同变更、支付完成、消息发送、维修处理和投诉处理。
+34. 管理员监控概览现在通过现有的最近日志输出有了真实操作数据可展示。
+35. 使用 `compileall` 验证了后端模块、路由注册，前端 Vite 构建验证成功。
 
-## Step 9 Output
+## 步骤 9 产出
 
-36. Added frontend user API helpers for admin user list and account status updates.
-37. Rebuilt the admin dashboard with readable Chinese copy and a user management section.
-38. Connected role, status, and keyword filtering for users.
-39. Connected admin enable/disable account actions with report and monitor refresh after updates.
-40. Verified backend modules with `compileall` and the frontend with a successful Vite build.
+36. 添加了前端用户 API 辅助函数，用于管理员用户列表和账户状态更新。
+37. 使用中文可读文本重建了管理员仪表盘，并添加了用户管理部分。
+38. 连接了用户的角色、状态和关键词筛选功能。
+39. 连接了管理员启用/禁用账户操作，更新后刷新报表和监控数据。
+40. 使用 `compileall` 验证了后端模块，前端 Vite 构建验证成功。
 
-## Step 10 Output
+## 步骤 10 产出
 
-41. Replaced the news placeholder API with public published-news listing and landlord/admin management APIs.
-42. Added news serialization, operation logging, status lifecycle, and keyword filtering.
-43. Added public `/news` page and top-level navigation entry for published announcements.
-44. Added a shared news management component and embedded it in landlord and admin dashboards.
-45. Extended report and monitor overview data to include the news module.
-46. Verified backend modules with `compileall`, route registration, and the frontend with a successful Vite build.
+41. 将新闻占位 API 替换为公开已发布新闻列表和房东/管理员管理 API。
+42. 添加了新闻序列化、操作日志、状态生命周期和关键词筛选。
+43. 添加了公开的 `/news` 页面和顶部导航入口，用于展示已发布公告。
+44. 添加了共享新闻管理组件，并嵌入到房东和管理员仪表盘中。
+45. 扩展了报表和监控概览数据，将新闻模块纳入其中。
+46. 使用 `compileall`、路由注册验证了后端模块，前端 Vite 构建验证成功。
 
-## Step 11 Output
+## 步骤 11 产出
 
-47. Added a dedicated testing configuration that uses an in-memory SQLite database and isolated upload folder overrides.
-48. Added SQLite-compatible model ID typing while preserving MySQL `BIGINT` primary keys for the target database.
-49. Added pytest coverage for registration/login/current-user APIs, landlord house publishing and public browsing, tenant house permission checks, and news publication visibility.
-50. Centralized UTC timestamp generation to remove `datetime.utcnow()` deprecation warnings in Python 3.12+.
-51. Added `pytest` to backend dependencies.
-52. Verified backend modules with `compileall`, backend API tests with `pytest`, and the frontend with a successful Vite build.
+47. 添加了专用测试配置，使用内存 SQLite 数据库和隔离的上传文件夹覆盖。
+48. 添加了兼容 SQLite 的模型 ID 类型，同时为目标数据库保留 MySQL `BIGINT` 主键。
+49. 添加了 pytest 覆盖，包括注册/登录/当前用户 API、房东房源发布和公开浏览、租客房源权限检查以及新闻发布可见性。
+50. 集中化 UTC 时间戳生成，消除 Python 3.12+ 中 `datetime.utcnow()` 的弃用警告。
+51. 将 `pytest` 添加到后端依赖中。
+52. 使用 `compileall` 验证了后端模块，使用 `pytest` 验证了后端 API 测试，前端 Vite 构建验证成功。
 
-## Step 12 Output
+## 步骤 12 产出
 
-53. Added a Flask-Migrate/Alembic migration repository under `backend/migrations`.
-54. Added the initial production schema migration covering roles, users, houses, media, bookings, contracts, payments, messages, news, repairs, complaints, and operation logs.
-55. Seeded the initial `admin`, `landlord`, and `tenant` roles through the first migration.
-56. Made `AUTO_CREATE_DB` environment-driven and disabled it by default for production so production schema management can move through migrations.
-57. Updated `run.py` to select the Flask config from `FLASK_CONFIG`, which makes CLI migration usage predictable.
-58. Added an end-to-end rental workflow API test for house publishing, booking, booking confirmation, contract creation, contract signing, payment generation, and payment completion.
-59. Verified Alembic upgrade/role seed/downgrade against a temporary SQLite database, then verified backend tests, backend compilation, and frontend production build.
+53. 在 `backend/migrations` 下添加了 Flask-Migrate/Alembic 迁移仓库。
+54. 添加了初始生产 schema 迁移，涵盖 roles、users、houses、media、bookings、contracts、payments、messages、news、repairs、complaints 和 operation_logs 表。
+55. 通过首次迁移植入了初始 `admin`、`landlord` 和 `tenant` 角色种子数据。
+56. 使 `AUTO_CREATE_DB` 变为环境驱动，并在生产环境中默认禁用它，使生产 schema 管理可以通过迁移进行。
+57. 更新了 `run.py`，通过 `FLASK_CONFIG` 选择 Flask 配置，使 CLI 迁移使用方式可预测。
+58. 添加了端到端租赁流程 API 测试，涵盖房源发布、预约、预约确认、合同创建、合同签署、支付生成和支付完成。
+59. 针对临时 SQLite 数据库验证了 Alembic 升级/角色种子/降级，随后验证了后端测试、后端编译和前端生产构建。
 
-## Next Step
+## 下一步
 
-Continue with deployment configuration, admin bootstrap/seed strategy, broader regression coverage, and text encoding cleanup.
+继续进行部署配置、管理员引导/种子策略、更广泛的回归覆盖和文本编码清理。

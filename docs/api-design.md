@@ -1,32 +1,32 @@
-# API Design
+# API 设计
 
-## Design Scope
+## 设计范围
 
-This document defines the first-round REST API contract for the smart rental system. It focuses on the modules that will be implemented first:
+本文档定义智能租赁系统的第一轮 REST API 契约。重点涵盖将首先实现的模块：
 
-1. Authentication
-2. User profile
-3. House management
-4. Search and house display
-5. Booking
-6. Contract
-7. Payment
-8. Message
-9. Repair
-10. Complaint
-11. Report
-12. Monitor
-13. News
+1. 认证
+2. 用户个人资料
+3. 房源管理
+4. 搜索与房源展示
+5. 预约
+6. 合同
+7. 支付
+8. 消息
+9. 维修
+10. 投诉
+11. 报表
+12. 监控
+13. 新闻
 
-## Common Rules
+## 通用规则
 
-### Base Path
+### 基础路径
 
-All APIs use the `/api` prefix.
+所有 API 使用 `/api` 前缀。
 
-### Response Format
+### 响应格式
 
-Success response:
+成功响应：
 
 ```json
 {
@@ -36,7 +36,7 @@ Success response:
 }
 ```
 
-Failure response:
+失败响应：
 
 ```json
 {
@@ -48,22 +48,22 @@ Failure response:
 }
 ```
 
-### Authentication
+### 认证
 
-1. Use JWT for authenticated requests.
-2. Client sends token through `Authorization: Bearer <token>`.
-3. Role-based permissions are enforced for landlord, tenant, and admin routes.
+1. 使用 JWT 进行需要认证的请求。
+2. 客户端通过 `Authorization: Bearer <token>` 发送令牌。
+3. 基于角色的权限控制对房东、租客和管理员路由分别强制执行。
 
-### Pagination Convention
+### 分页约定
 
-List APIs accept:
+列表 API 接收：
 
-| Field | Type | Default | Description |
+| 字段 | 类型 | 默认值 | 描述 |
 | --- | --- | --- | --- |
-| page | int | 1 | Current page |
-| page_size | int | 10 | Page size |
+| page | int | 1 | 当前页码 |
+| page_size | int | 10 | 每页大小 |
 
-Paginated response:
+分页响应：
 
 ```json
 {
@@ -80,733 +80,733 @@ Paginated response:
 }
 ```
 
-## Authentication Module
+## 认证模块
 
 ### `POST /api/auth/register`
 
-Register a new user account.
+注册新用户账户。
 
-Allowed roles for initial registration: `landlord`, `tenant`
+初始注册允许的角色：`landlord`、`tenant`
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| role | string | yes | `landlord` or `tenant` |
-| username | string | yes | Unique username |
-| password | string | yes | Plain password before hashing |
-| email | string | no | Email |
-| phone | string | no | Phone |
-| real_name | string | no | Real name |
+| role | string | 是 | `landlord` 或 `tenant` |
+| username | string | 是 | 唯一用户名 |
+| password | string | 是 | 哈希前的明文密码 |
+| email | string | 否 | 邮箱 |
+| phone | string | 否 | 手机号 |
+| real_name | string | 否 | 真实姓名 |
 
-Response data:
+响应数据：
 
-| Field | Type | Description |
+| 字段 | 类型 | 描述 |
 | --- | --- | --- |
-| user_id | int | Created user ID |
-| username | string | Username |
-| role | string | User role |
+| user_id | int | 创建的用户 ID |
+| username | string | 用户名 |
+| role | string | 用户角色 |
 
 ### `POST /api/auth/login`
 
-Authenticate user and return JWT.
+认证用户并返回 JWT。
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| username | string | yes | Username or phone or email |
-| password | string | yes | Plain password |
+| username | string | 是 | 用户名、手机号或邮箱 |
+| password | string | 是 | 明文密码 |
 
-Response data:
+响应数据：
 
-| Field | Type | Description |
+| 字段 | 类型 | 描述 |
 | --- | --- | --- |
-| access_token | string | JWT access token |
-| token_type | string | Usually `Bearer` |
-| user | object | Basic user info |
+| access_token | string | JWT 访问令牌 |
+| token_type | string | 通常为 `Bearer` |
+| user | object | 用户基本信息 |
 
 ### `GET /api/auth/me`
 
-Return current authenticated user info.
+返回当前已认证用户信息。
 
-Permission: authenticated user
+权限：已认证用户
 
 ### `POST /api/auth/logout`
 
-Current phase will keep this as a logical logout endpoint for frontend integration. Token blacklist can be added later.
+当前阶段将其保留为逻辑登出端点，用于前端集成。令牌黑名单可在以后添加。
 
-Permission: authenticated user
+权限：已认证用户
 
-## User Module
+## 用户模块
 
 ### `GET /api/users/profile`
 
-Get current user profile.
+获取当前用户个人资料。
 
-Permission: authenticated user
+权限：已认证用户
 
-Response fields:
+响应字段：
 
-| Field | Type | Description |
+| 字段 | 类型 | 描述 |
 | --- | --- | --- |
-| id | int | User ID |
-| username | string | Username |
-| role | string | Role code |
-| email | string | Email |
-| phone | string | Phone |
-| real_name | string | Real name |
-| avatar_url | string | Avatar URL |
-| status | string | User status |
+| id | int | 用户 ID |
+| username | string | 用户名 |
+| role | string | 角色编码 |
+| email | string | 邮箱 |
+| phone | string | 手机号 |
+| real_name | string | 真实姓名 |
+| avatar_url | string | 头像 URL |
+| status | string | 用户状态 |
 
 ### `PUT /api/users/profile`
 
-Update current user profile.
+更新当前用户个人资料。
 
-Permission: authenticated user
+权限：已认证用户
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| real_name | string | no | Real name |
-| email | string | no | Email |
-| phone | string | no | Phone |
-| avatar_url | string | no | Avatar URL |
-| gender | string | no | Gender |
+| real_name | string | 否 | 真实姓名 |
+| email | string | 否 | 邮箱 |
+| phone | string | 否 | 手机号 |
+| avatar_url | string | 否 | 头像 URL |
+| gender | string | 否 | 性别 |
 
 ### `GET /api/users`
 
-Get user list.
+获取用户列表。
 
-Permission: admin only
+权限：仅管理员
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| role | string | no | Filter by role |
-| status | string | no | Filter by status |
-| keyword | string | no | Username, real name, phone |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| role | string | 否 | 按角色筛选 |
+| status | string | 否 | 按状态筛选 |
+| keyword | string | 否 | 用户名、真实姓名、手机号 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `PATCH /api/users/{user_id}/status`
 
-Update user status.
+更新用户状态。
 
-Permission: admin only
+权限：仅管理员
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | yes | `active` or `disabled` |
+| status | string | 是 | `active` 或 `disabled` |
 
-Frontend admin dashboard now consumes these APIs for role/status/keyword filtering and account enable/disable operations.
+前端管理员仪表盘现在使用这些 API 进行角色/状态/关键词筛选以及账户启用/禁用操作。
 
-## House Module
+## 房源模块
 
 ### `POST /api/houses`
 
-Create a new house listing.
+创建新房源信息。
 
-Permission: landlord only
+权限：仅房东
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| title | string | yes | Listing title |
-| province | string | no | Province |
-| city | string | yes | City |
-| district | string | yes | District |
-| community | string | no | Community |
-| address_detail | string | yes | Detailed address |
-| house_type | string | no | House type |
-| layout | string | yes | Layout |
-| area | number | yes | Area |
-| rent | number | yes | Monthly rent |
-| deposit | number | no | Deposit |
-| decoration | string | no | Decoration |
-| floor | int | no | Floor |
-| total_floors | int | no | Total floors |
-| orientation | string | no | Orientation |
-| description | string | no | Description |
+| title | string | 是 | 房源标题 |
+| province | string | 否 | 省份 |
+| city | string | 是 | 城市 |
+| district | string | 是 | 区域 |
+| community | string | 否 | 小区 |
+| address_detail | string | 是 | 详细地址 |
+| house_type | string | 否 | 房屋类型 |
+| layout | string | 是 | 户型 |
+| area | number | 是 | 面积 |
+| rent | number | 是 | 月租金 |
+| deposit | number | 否 | 押金 |
+| decoration | string | 否 | 装修情况 |
+| floor | int | 否 | 楼层 |
+| total_floors | int | 否 | 总楼层 |
+| orientation | string | 否 | 朝向 |
+| description | string | 否 | 描述 |
 
 ### `GET /api/houses`
 
-Get public house list.
+获取公开房源列表。
 
-Permission: public
+权限：公开
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| city | string | no | City filter |
-| district | string | no | District filter |
-| layout | string | no | Layout filter |
-| min_rent | number | no | Minimum rent |
-| max_rent | number | no | Maximum rent |
-| status | string | no | Default to `available` for public list |
-| keyword | string | no | Search title or address |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| city | string | 否 | 城市筛选 |
+| district | string | 否 | 区域筛选 |
+| layout | string | 否 | 户型筛选 |
+| min_rent | number | 否 | 最低租金 |
+| max_rent | number | 否 | 最高租金 |
+| status | string | 否 | 公开列表默认为 `available` |
+| keyword | string | 否 | 搜索标题或地址 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
-Response item fields:
+响应条目字段：
 
-| Field | Type | Description |
+| 字段 | 类型 | 描述 |
 | --- | --- | --- |
-| id | int | House ID |
-| title | string | Listing title |
-| city | string | City |
-| district | string | District |
-| layout | string | Layout |
-| area | number | Area |
-| rent | number | Monthly rent |
-| status | string | House status |
-| cover_url | string | Primary image URL |
+| id | int | 房源 ID |
+| title | string | 房源标题 |
+| city | string | 城市 |
+| district | string | 区域 |
+| layout | string | 户型 |
+| area | number | 面积 |
+| rent | number | 月租金 |
+| status | string | 房源状态 |
+| cover_url | string | 封面图片 URL |
 
 ### `GET /api/houses/mine`
 
-Get current landlord's managed house list.
+获取当前房东管理的房源列表。
 
-Permission: landlord or admin
+权限：房东或管理员
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | no | Filter by house status |
-| city | string | no | Filter by city |
-| keyword | string | no | Search title, community, or address |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| status | string | 否 | 按房源状态筛选 |
+| city | string | 否 | 按城市筛选 |
+| keyword | string | 否 | 搜索标题、小区或地址 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `GET /api/houses/{house_id}`
 
-Get house detail.
+获取房源详情。
 
-Permission: public
+权限：公开
 
 ### `PUT /api/houses/{house_id}`
 
-Update a house listing.
+更新房源信息。
 
-Permission: landlord owner only
+权限：仅房源所属房东
 
 ### `DELETE /api/houses/{house_id}`
 
-Delete or logically offline a house listing.
+删除或逻辑下架房源信息。
 
-Permission: landlord owner or admin
+权限：房源所属房东或管理员
 
 ### `PATCH /api/houses/{house_id}/status`
 
-Update house status.
+更新房源状态。
 
-Permission: landlord owner or admin
+权限：房源所属房东或管理员
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | yes | `draft`, `available`, `rented`, `repairing`, `offline` |
+| status | string | 是 | `draft`、`available`、`rented`、`repairing`、`offline` |
 
 ### `POST /api/houses/{house_id}/media`
 
-Upload house media. Supports both multipart file upload and external media URL metadata.
+上传房源媒体。支持 multipart 文件上传和外部媒体 URL 元数据。
 
-Permission: landlord owner only
+权限：仅房源所属房东
 
-JSON request body for external media:
+外部媒体的 JSON 请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| media_type | string | yes | `image` or `video` |
-| file_url | string | yes | Uploaded file URL |
-| sort_order | int | no | Sort order |
+| media_type | string | 是 | `image` 或 `video` |
+| file_url | string | 是 | 上传文件 URL |
+| sort_order | int | 否 | 排序顺序 |
 
-Multipart form data for local upload:
+本地上传的 Multipart 表单数据：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| file | file | yes | Image or video file |
-| sort_order | int | no | Sort order |
+| file | file | 是 | 图片或视频文件 |
+| sort_order | int | 否 | 排序顺序 |
 
-Uploaded files are served from `/uploads/<path>`.
+上传的文件通过 `/uploads/<path>` 提供访问。
 
 ### `DELETE /api/houses/{house_id}/media/{media_id}`
 
-Delete a house media record. If the media file is stored under the local upload folder, the file is removed as well.
+删除房源媒体记录。如果媒体文件存储在本地上传文件夹中，文件也会被一并删除。
 
-Permission: landlord owner or admin
+权限：房源所属房东或管理员
 
-## Search Module
+## 搜索模块
 
 ### `GET /api/search/regions`
 
-Aggregate houses by region.
+按区域聚合房源。
 
-Permission: public
+权限：公开
 
-Response item fields:
+响应条目字段：
 
-| Field | Type | Description |
+| 字段 | 类型 | 描述 |
 | --- | --- | --- |
-| city | string | City |
-| district | string | District |
-| community | string | Community |
-| house_count | int | Matching house count |
+| city | string | 城市 |
+| district | string | 区域 |
+| community | string | 小区 |
+| house_count | int | 匹配房源数量 |
 
 ### `GET /api/search/layouts`
 
-Aggregate houses by layout.
+按户型聚合房源。
 
-Permission: public
+权限：公开
 
-Response item fields:
+响应条目字段：
 
-| Field | Type | Description |
+| 字段 | 类型 | 描述 |
 | --- | --- | --- |
-| layout | string | House layout |
-| house_count | int | Matching house count |
+| layout | string | 房源户型 |
+| house_count | int | 匹配房源数量 |
 
 ### `GET /api/search/recommendations`
 
-Return recommended houses. Current phase can use rule-based recommendation such as latest houses or similar price range.
+返回推荐房源。当前阶段可使用基于规则的推荐，如最新房源或相似价格区间的房源。
 
-Permission: public
+权限：公开
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| house_id | int | no | Base house for similar recommendation |
-| city | string | no | City filter |
-| limit | int | no | Number of results |
+| house_id | int | 否 | 作为相似推荐基准的房源 |
+| city | string | 否 | 城市筛选 |
+| limit | int | 否 | 返回结果数量 |
 
-## Booking Module
+## 预约模块
 
 ### `POST /api/bookings`
 
-Create a new house viewing booking.
+创建新的看房预约。
 
-Permission: tenant only
+权限：仅租客
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| house_id | int | yes | Target house ID |
-| appointment_time | string | yes | ISO datetime string |
-| remark | string | no | Booking note |
+| house_id | int | 是 | 目标房源 ID |
+| appointment_time | string | 是 | ISO 日期时间字符串 |
+| remark | string | 否 | 预约备注 |
 
 ### `GET /api/bookings/mine`
 
-Get booking records for current user.
+获取当前用户的预约记录。
 
-Permission: tenant, landlord, or admin
+权限：租客、房东或管理员
 
-Behavior:
+行为：
 
-1. Tenant gets bookings created by self.
-2. Landlord gets bookings for own houses.
-3. Admin gets all bookings.
+1. 租客获取自己创建的预约。
+2. 房东获取自己房源的预约。
+3. 管理员获取所有预约。
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | no | Filter by booking status |
-| house_id | int | no | Filter by house |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| status | string | 否 | 按预约状态筛选 |
+| house_id | int | 否 | 按房源筛选 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `PATCH /api/bookings/{booking_id}/status`
 
-Update booking status.
+更新预约状态。
 
-Permission:
+权限：
 
-1. Landlord owner or admin can set `confirmed`, `cancelled`, `completed`.
-2. Tenant can only set `cancelled` for own booking.
+1. 房源所属房东或管理员可设置为 `confirmed`、`cancelled`、`completed`。
+2. 租客只能将自己的预约设置为 `cancelled`。
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | yes | `confirmed`, `cancelled`, or `completed` |
+| status | string | 是 | `confirmed`、`cancelled` 或 `completed` |
 
-## Contract Module
+## 合同模块
 
 ### `POST /api/contracts`
 
-Create a rental contract from an eligible booking.
+从符合条件的预约创建租赁合同。
 
-Permission: landlord or admin
+权限：房东或管理员
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| booking_id | int | yes | Confirmed or completed booking ID |
-| start_date | string | yes | Lease start date in `YYYY-MM-DD` |
-| end_date | string | yes | Lease end date in `YYYY-MM-DD` |
-| payment_cycle | string | no | Defaults to `monthly` |
-| content | string | no | Contract content |
+| booking_id | int | 是 | 已确认或已完成的预约 ID |
+| start_date | string | 是 | 租赁开始日期，格式 `YYYY-MM-DD` |
+| end_date | string | 是 | 租赁结束日期，格式 `YYYY-MM-DD` |
+| payment_cycle | string | 否 | 默认为 `monthly` |
+| content | string | 否 | 合同内容 |
 
 ### `GET /api/contracts/mine`
 
-Get contracts related to current user.
+获取与当前用户相关的合同。
 
-Permission: tenant, landlord, or admin
+权限：租客、房东或管理员
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | no | Filter by contract status |
-| house_id | int | no | Filter by house |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| status | string | 否 | 按合同状态筛选 |
+| house_id | int | 否 | 按房源筛选 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `PATCH /api/contracts/{contract_id}/sign`
 
-Tenant signs the prepared contract.
+租客签署已准备好的合同。
 
-Permission: tenant or admin
+权限：租客或管理员
 
-Behavior:
+行为：
 
-1. Contract must be in `draft` status.
-2. On success, contract becomes `active`.
-3. Initial pending payments are generated automatically.
+1. 合同必须处于 `draft` 状态。
+2. 成功后，合同变为 `active`。
+3. 自动生成初始待支付款项。
 
 ### `PATCH /api/contracts/{contract_id}/status`
 
-Update contract lifecycle status.
+更新合同生命周期状态。
 
-Permission: landlord owner or admin
+权限：房源所属房东或管理员
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | yes | `terminated` or `expired` |
+| status | string | 是 | `terminated` 或 `expired` |
 
-## Payment Module
+## 支付模块
 
 ### `GET /api/payments/mine`
 
-Get payments relevant to current user.
+获取与当前用户相关的支付记录。
 
-Permission: tenant, landlord, or admin
+权限：租客、房东或管理员
 
-Behavior:
+行为：
 
-1. Tenant gets payments where current user is payer.
-2. Landlord gets payments where current user is payee.
-3. Admin gets all payments.
+1. 租客获取当前用户作为付款方的支付记录。
+2. 房东获取当前用户作为收款方的支付记录。
+3. 管理员获取所有支付记录。
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | no | Filter by payment status |
-| contract_id | int | no | Filter by contract |
-| payment_type | string | no | Filter by payment type |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| status | string | 否 | 按支付状态筛选 |
+| contract_id | int | 否 | 按合同筛选 |
+| payment_type | string | 否 | 按支付类型筛选 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `PATCH /api/payments/{payment_id}/pay`
 
-Mark a payment as paid.
+将支付标记为已支付。
 
-Permission: payer or admin
+权限：付款方或管理员
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| payment_method | string | yes | Such as `bank`, `alipay`, or `wechat` |
-| transaction_no | string | no | Optional transaction reference |
+| payment_method | string | 是 | 如 `bank`、`alipay` 或 `wechat` |
+| transaction_no | string | 否 | 可选交易参考号 |
 
-## Message Module
+## 消息模块
 
 ### `GET /api/messages/conversations`
 
-Get the current user's conversation summary list.
+获取当前用户的会话摘要列表。
 
-Permission: authenticated user
+权限：已认证用户
 
-Response data:
+响应数据：
 
-| Field | Type | Description |
+| 字段 | 类型 | 描述 |
 | --- | --- | --- |
-| conversation_key | string | Conversation identifier composed from house and counterpart |
-| counterpart | object | The other participant |
-| house | object | Related house, nullable for general conversation |
-| last_message | object | Latest message summary |
-| unread_count | int | Unread messages in this conversation |
-| message_count | int | Total messages in this conversation |
+| conversation_key | string | 由房源和对方组成的会话标识符 |
+| counterpart | object | 对方参与者 |
+| house | object | 相关房源，一般会话可为空 |
+| last_message | object | 最新消息摘要 |
+| unread_count | int | 此会话中未读消息数 |
+| message_count | int | 此会话中消息总数 |
 
 ### `GET /api/messages`
 
-Get messages for one conversation.
+获取一个会话的消息。
 
-Permission: authenticated user
+权限：已认证用户
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| counterpart_id | int | yes | The other participant user ID |
-| house_id | int | no | Optional house scope for the conversation |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| counterpart_id | int | 是 | 对方参与者用户 ID |
+| house_id | int | 否 | 可选，限定会话的房源范围 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `POST /api/messages`
 
-Send a message to another user.
+向其他用户发送消息。
 
-Permission: authenticated user
+权限：已认证用户
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| receiver_id | int | yes | Target user ID |
-| content | string | yes | Message content |
-| house_id | int | no | Related house ID when the conversation is tied to a listing |
+| receiver_id | int | 是 | 目标用户 ID |
+| content | string | 是 | 消息内容 |
+| house_id | int | 否 | 与会话关联的房源 ID，当对话与某个房源相关时提供 |
 
-Behavior:
+行为：
 
-1. Sender cannot message self.
-2. When `house_id` is provided, the conversation must involve that house's landlord.
+1. 发送者不能给自己发消息。
+2. 当提供 `house_id` 时，会话必须涉及该房源的房东。
 
 ### `PATCH /api/messages/read`
 
-Mark unread messages in one conversation as read.
+将一个会话中的未读消息标记为已读。
 
-Permission: authenticated user
+权限：已认证用户
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| counterpart_id | int | yes | The other participant user ID |
-| house_id | int | no | Optional house scope for the conversation |
+| counterpart_id | int | 是 | 对方参与者用户 ID |
+| house_id | int | 否 | 可选，限定会话的房源范围 |
 
-## Repair Module
+## 维修模块
 
 ### `POST /api/repairs`
 
-Create a repair request for an active rental contract.
+为有效租赁合同创建维修请求。
 
-Permission: tenant only
+权限：仅租客
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| house_id | int | yes | House under an active contract owned by current tenant |
-| title | string | yes | Repair title |
-| description | string | yes | Repair details |
-| priority | string | no | `low`, `medium`, `high`, or `urgent`; defaults to `medium` |
+| house_id | int | 是 | 当前租客名下有效合同关联的房源 |
+| title | string | 是 | 维修标题 |
+| description | string | 是 | 维修详情 |
+| priority | string | 否 | `low`、`medium`、`high` 或 `urgent`；默认为 `medium` |
 
 ### `GET /api/repairs/mine`
 
-Get repair requests relevant to current user.
+获取与当前用户相关的维修请求。
 
-Permission: tenant, landlord, or admin
+权限：租客、房东或管理员
 
-Behavior:
+行为：
 
-1. Tenant gets repair requests submitted by self.
-2. Landlord gets repair requests for own houses.
-3. Admin gets all repair requests.
+1. 租客获取自己提交的维修请求。
+2. 房东获取自己房源的维修请求。
+3. 管理员获取所有维修请求。
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | no | Filter by repair status |
-| house_id | int | no | Filter by house |
-| priority | string | no | Filter by priority |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| status | string | 否 | 按维修状态筛选 |
+| house_id | int | 否 | 按房源筛选 |
+| priority | string | 否 | 按优先级筛选 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `PATCH /api/repairs/{repair_id}/status`
 
-Update repair handling status.
+更新维修处理状态。
 
-Permission: landlord owner or admin
+权限：房源所属房东或管理员
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | yes | `submitted`, `processing`, `completed`, or `rejected` |
+| status | string | 是 | `submitted`、`processing`、`completed` 或 `rejected` |
 
-## Complaint Module
+## 投诉模块
 
 ### `POST /api/complaints`
 
-Create a complaint.
+创建投诉。
 
-Permission: tenant or landlord
+权限：租客或房东
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| house_id | int | no | Related house |
-| title | string | yes | Complaint title |
-| content | string | yes | Complaint content |
+| house_id | int | 否 | 相关房源 |
+| title | string | 是 | 投诉标题 |
+| content | string | 是 | 投诉内容 |
 
 ### `GET /api/complaints/mine`
 
-Get complaint records.
+获取投诉记录。
 
-Permission: tenant, landlord, or admin
+权限：租客、房东或管理员
 
-Behavior:
+行为：
 
-1. Tenant and landlord get complaints submitted by self.
-2. Admin gets all complaints.
+1. 租客和房东获取自己提交的投诉。
+2. 管理员获取所有投诉。
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | no | Filter by complaint status |
-| house_id | int | no | Filter by house |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| status | string | 否 | 按投诉状态筛选 |
+| house_id | int | 否 | 按房源筛选 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `PATCH /api/complaints/{complaint_id}/status`
 
-Update complaint processing status and result.
+更新投诉处理状态和结果。
 
-Permission: admin only
+权限：仅管理员
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | yes | `submitted`, `processing`, `resolved`, or `rejected` |
-| result | string | no | Processing result |
+| status | string | 是 | `submitted`、`processing`、`resolved` 或 `rejected` |
+| result | string | 否 | 处理结果 |
 
-## Report Module
+## 报表模块
 
 ### `GET /api/reports/overview`
 
-Return operational totals and status distributions.
+返回运营统计总数和状态分布。
 
-Permission: admin only
+权限：仅管理员
 
-Response data includes user, house, booking, contract, payment, repair, complaint totals, paid amount, pending payment amount, and grouped status counts.
+响应数据包括用户、房源、预约、合同、支付、维修、投诉的总数，已支付金额、待支付金额以及各分组状态计数。
 
-## Monitor Module
+## 监控模块
 
 ### `GET /api/monitor/overview`
 
-Return backend service health, module status, check time, and recent operation logs.
+返回后端服务健康状态、模块状态、检查时间和最近操作日志。
 
-Permission: admin only
+权限：仅管理员
 
-Recent logs are generated by key write actions, including authentication, user status changes, house and media management, booking, contract, payment, message, repair, and complaint operations.
+最近日志由关键写操作生成，包括认证、用户状态变更、房源和媒体管理、预约、合同、支付、消息、维修和投诉操作。
 
-## News Module
+## 新闻模块
 
 ### `GET /api/news`
 
-Get published news and announcements.
+获取已发布的新闻和公告。
 
-Permission: public
+权限：公开
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| keyword | string | no | Search title or content |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| keyword | string | 否 | 搜索标题或内容 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `GET /api/news/mine`
 
-Get managed news records.
+获取管理的新闻记录。
 
-Permission: landlord or admin
+权限：房东或管理员
 
-Behavior:
+行为：
 
-1. Landlord gets news authored by self.
-2. Admin gets all news.
+1. 房东获取自己撰写的新闻。
+2. 管理员获取所有新闻。
 
-Query params:
+查询参数：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | no | Filter by status |
-| keyword | string | no | Search title or content |
-| page | int | no | Page number |
-| page_size | int | no | Page size |
+| status | string | 否 | 按状态筛选 |
+| keyword | string | 否 | 搜索标题或内容 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页大小 |
 
 ### `POST /api/news`
 
-Create a news or announcement item.
+创建新闻或公告条目。
 
-Permission: landlord or admin
+权限：房东或管理员
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| title | string | yes | News title |
-| content | string | yes | News content |
-| status | string | no | `draft` or `published`; defaults to `draft` |
+| title | string | 是 | 新闻标题 |
+| content | string | 是 | 新闻内容 |
+| status | string | 否 | `draft` 或 `published`；默认为 `draft` |
 
 ### `PUT /api/news/{news_id}`
 
-Update title or content.
+更新标题或内容。
 
-Permission: landlord author or admin
+权限：新闻作者房东或管理员
 
 ### `PATCH /api/news/{news_id}/status`
 
-Update news status.
+更新新闻状态。
 
-Permission: landlord author or admin
+权限：新闻作者房东或管理员
 
-Request body:
+请求体：
 
-| Field | Type | Required | Description |
+| 字段 | 类型 | 必填 | 描述 |
 | --- | --- | --- | --- |
-| status | string | yes | `draft`, `published`, or `archived` |
+| status | string | 是 | `draft`、`published` 或 `archived` |
 
 ### `DELETE /api/news/{news_id}`
 
-Delete a news item.
+删除新闻条目。
 
-Permission: landlord author or admin
+权限：新闻作者房东或管理员
 
-## Error Code Suggestion
+## 错误码建议
 
-| Code | Meaning |
+| 码 | 含义 |
 | --- | --- |
-| 0 | Success |
-| 4001 | Validation error |
-| 4002 | Authentication failed |
-| 4003 | Permission denied |
-| 4004 | Resource not found |
-| 4009 | Duplicate resource |
-| 5000 | Internal server error |
+| 0 | 成功 |
+| 4001 | 验证错误 |
+| 4002 | 认证失败 |
+| 4003 | 权限拒绝 |
+| 4004 | 资源未找到 |
+| 4009 | 资源重复 |
+| 5000 | 内部服务器错误 |
 
-## Notes For Implementation
+## 实现说明
 
-1. Step 4 should implement `auth`, `users/profile`, and `houses` first.
-2. Use consistent serialization fields between backend and frontend.
-3. Reserve upload and recommendation APIs for iterative enhancement rather than over-designing them now.
+1. 步骤 4 应首先实现 `auth`、`users/profile` 和 `houses`。
+2. 后端与前端之间使用一致的序列化字段。
+3. 上传和推荐 API 留待迭代增强，而非当前过度设计。
