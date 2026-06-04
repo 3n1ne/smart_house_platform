@@ -49,7 +49,7 @@
 | real_name | varchar(80) | 真实姓名 |
 | avatar_url | varchar(255) | 头像 URL |
 | gender | varchar(20) | 可选性别 |
-| identity_no | varchar(64) | 可选身份证号 |
+| identity_no | varchar(255) | 可选身份证号，应用层加密后存储 |
 | status | varchar(20) | `active`、`disabled`、`pending` |
 | is_mfa_enabled | bool | 多因素认证启用标志 |
 | last_login_at | datetime | 最后登录时间 |
@@ -256,5 +256,5 @@
 ## 下一轮迭代注意事项
 
 1. 添加迁移支持和角色的初始种子数据。
-2. 确认哪些字段需要静态加密。
+2. 身份证号已通过应用层加密存储，并在 API 响应中只返回脱敏值；生产环境建议将 `SENSITIVE_DATA_KEY` 托管到 KMS 或密钥管理服务。
 3. 基于这些实体定义 API 请求和响应结构。

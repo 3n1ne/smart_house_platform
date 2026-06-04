@@ -13,13 +13,13 @@
 
     <div v-else-if="house" class="stack-section">
       <section class="detail-cover">
-        <img v-if="primaryMedia" :src="primaryMedia.file_url" :alt="house.title" />
+        <img v-if="primaryMedia" :src="resolveAssetUrl(primaryMedia.file_url)" :alt="house.title" />
         <div v-else class="house-cover__placeholder house-cover__placeholder--large">暂无图片</div>
       </section>
 
       <div v-if="gallery.length" class="gallery-grid">
         <div v-for="item in gallery" :key="item.id" class="gallery-item">
-          <img v-if="item.media_type === 'image'" :src="item.file_url" :alt="house.title" />
+          <img v-if="item.media_type === 'image'" :src="resolveAssetUrl(item.file_url)" :alt="house.title" />
           <div v-else class="gallery-video">视频</div>
         </div>
       </div>
@@ -160,6 +160,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
 import { createBooking } from "../../api/booking";
+import { resolveAssetUrl } from "../../api/assets";
 import { fetchHouseDetail } from "../../api/house";
 import { sendMessage } from "../../api/message";
 import { useAuthStore } from "../../stores/auth";

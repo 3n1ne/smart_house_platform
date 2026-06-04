@@ -14,7 +14,7 @@ class User(db.Model):
     real_name = db.Column(db.String(80))
     avatar_url = db.Column(db.String(255))
     gender = db.Column(db.String(20))
-    identity_no = db.Column(db.String(64))
+    identity_no = db.Column(db.String(255))
     status = db.Column(db.String(20), default="active", nullable=False, index=True)
     is_mfa_enabled = db.Column(db.Boolean, default=False, nullable=False)
     last_login_at = db.Column(db.DateTime)

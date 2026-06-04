@@ -20,6 +20,20 @@ def _get_payment_or_404(payment_id):
     return payment, None
 
 
+def _can_access_payment(user, role, payment):
+    if role == "admin":
+        return True
+    if role == "tenant":
+        return payment.payer_id == user.id
+    if role == "landlord":
+        return payment.payee_id == user.id
+    return False
+
+
+def _transaction_no(payment):
+    return f"PAY{utc_now().strftime('%Y%m%d%H%M%S')}{payment.id}"
+
+
 @payment_bp.get("/mine")
 @roles_required("tenant", "landlord", "admin")
 def list_my_payments():
@@ -91,7 +105,7 @@ def pay_payment(payment_id):
 
     payment.status = "paid"
     payment.payment_method = payment_method
-    payment.transaction_no = payload.get("transaction_no")
+    payment.transaction_no = payload.get("transaction_no") or _transaction_no(payment)
     payment.paid_at = utc_now()
     log_operation(
         "payment",
@@ -106,4 +120,104 @@ def pay_payment(payment_id):
     return success_response(
         serialize_payment(payment),
         message="payment completed",
+    )
+
+
+@payment_bp.patch("/<int:payment_id>/fail")
+@roles_required("tenant", "admin")
+def fail_payment(payment_id):
+    user = get_current_user()
+    role = get_jwt().get("role")
+    payment, error = _get_payment_or_404(payment_id)
+    if error:
+        return error
+
+    if role == "tenant" and payment.payer_id != user.id:
+        return error_response("permission denied", code=4003, status=403)
+    if payment.status not in {"pending", "overdue"}:
+        return error_response(
+            "validation error",
+            code=4001,
+            errors={"payment": ["only pending or overdue payments can be marked failed"]},
+        )
+
+    payload = request.get_json(silent=True) or {}
+    payment.status = "failed"
+    payment.payment_method = payload.get("payment_method", payment.payment_method)
+    log_operation(
+        "payment",
+        "fail",
+        target_type="payment",
+        target_id=payment.id,
+        detail={"reason": payload.get("reason")},
+        operator_id=user.id,
+    )
+    db.session.commit()
+
+    return success_response(serialize_payment(payment), message="payment failed")
+
+
+@payment_bp.patch("/<int:payment_id>/refund")
+@roles_required("landlord", "admin")
+def refund_payment(payment_id):
+    user = get_current_user()
+    role = get_jwt().get("role")
+    payment, error = _get_payment_or_404(payment_id)
+    if error:
+        return error
+
+    if role == "landlord" and payment.payee_id != user.id:
+        return error_response("permission denied", code=4003, status=403)
+    if payment.status != "paid":
+        return error_response(
+            "validation error",
+            code=4001,
+            errors={"payment": ["only paid payments can be refunded"]},
+        )
+
+    payload = request.get_json(silent=True) or {}
+    payment.status = "refunded"
+    log_operation(
+        "payment",
+        "refund",
+        target_type="payment",
+        target_id=payment.id,
+        detail={"reason": payload.get("reason"), "transaction_no": payment.transaction_no},
+        operator_id=user.id,
+    )
+    db.session.commit()
+
+    return success_response(serialize_payment(payment), message="payment refunded")
+
+
+@payment_bp.post("/overdue-scan")
+@roles_required("landlord", "admin")
+def mark_overdue_payments():
+    user = get_current_user()
+    role = get_jwt().get("role")
+    today = utc_now().date()
+
+    query = Payment.query.filter(Payment.status == "pending", Payment.due_date < today)
+    if role == "landlord":
+        query = query.filter(Payment.payee_id == user.id)
+
+    payments = query.all()
+    for payment in payments:
+        payment.status = "overdue"
+        log_operation(
+            "payment",
+            "mark_overdue",
+            target_type="payment",
+            target_id=payment.id,
+            detail={"due_date": payment.due_date.isoformat() if payment.due_date else None},
+            operator_id=user.id,
+        )
+
+    db.session.commit()
+    return success_response(
+        {
+            "updated_count": len(payments),
+            "items": [serialize_payment(payment) for payment in payments],
+        },
+        message="overdue payments updated",
     )

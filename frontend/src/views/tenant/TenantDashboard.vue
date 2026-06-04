@@ -1,10 +1,31 @@
 <template>
-  <section class="page-shell">
-    <div class="stack-section">
+  <section class="page-shell page-shell--dashboard">
+    <div class="workspace-shell">
+      <aside class="workspace-sidebar" aria-label="租客功能导航">
+        <div class="workspace-sidebar__header">
+          <p class="workspace-sidebar__title">租客工作台</p>
+        </div>
+
+        <nav class="workspace-nav">
+          <button
+            v-for="(item, index) in tenantSections"
+            :key="item.key"
+            class="workspace-nav__button"
+            :class="{ 'workspace-nav__button--active': activeSection === item.key }"
+            type="button"
+            @click="activeSection = item.key"
+          >
+            <span class="workspace-nav__index">{{ String(index + 1).padStart(2, "0") }}</span>
+            <span>{{ item.label }}</span>
+          </button>
+        </nav>
+      </aside>
+
+      <div class="workspace-content stack-section">
       <div class="hero-card dashboard-hero">
         <div>
           <span class="eyebrow">租客控制台</span>
-          <h1 class="hero-title">我的租住流程</h1>
+          <h1 class="hero-title">我的租房事项</h1>
           <p class="hero-text">集中处理预约、合同、账单、维修、投诉和消息。</p>
         </div>
 
@@ -14,7 +35,60 @@
         </div>
       </div>
 
-      <div class="page-card">
+      <div v-show="activeSection === 'overview'" class="page-card workspace-panel">
+        <div class="section-head section-head--compact">
+          <div>
+            <span class="eyebrow">租赁历史</span>
+            <h2 class="page-title page-title--section">历史摘要</h2>
+          </div>
+          <button class="ghost-button" type="button" :disabled="loading.history" @click="loadHistory">
+            {{ loading.history ? "刷新中..." : "刷新" }}
+          </button>
+        </div>
+
+        <p v-if="errors.history" class="form-message form-message--error">{{ errors.history }}</p>
+
+        <div v-if="history" class="history-summary">
+          <div class="history-metric">
+            <strong>{{ history.summary.bookings }}</strong>
+            <span>预约</span>
+          </div>
+          <div class="history-metric">
+            <strong>{{ history.summary.contracts }}</strong>
+            <span>合同</span>
+          </div>
+          <div class="history-metric">
+            <strong>{{ history.summary.payments }}</strong>
+            <span>账单</span>
+          </div>
+          <div class="history-metric">
+            <strong>{{ history.summary.repairs }}</strong>
+            <span>维修</span>
+          </div>
+          <div class="history-metric">
+            <strong>{{ history.summary.complaints }}</strong>
+            <span>投诉</span>
+          </div>
+        </div>
+
+        <div v-if="history?.recent_contracts?.length" class="manage-list">
+          <article v-for="contract in history.recent_contracts.slice(0, 3)" :key="contract.id" class="manage-item">
+            <div class="manage-item__main">
+              <div class="house-meta">
+                <span class="tag">{{ formatContractStatus(contract.status) }}</span>
+                <span class="tag tag--light">{{ contract.contract_no }}</span>
+              </div>
+              <h3 class="house-title house-title--small">{{ contract.house?.title || "合同房源" }}</h3>
+              <div class="booking-meta">
+                <span>租期：{{ contract.start_date }} 至 {{ contract.end_date }}</span>
+                <span>月租：¥{{ contract.monthly_rent }}/月</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div v-show="activeSection === 'bookings'" class="page-card workspace-panel">
         <div class="section-head section-head--compact">
           <div>
             <span class="eyebrow">看房预约</span>
@@ -82,7 +156,7 @@
         </div>
       </div>
 
-      <div class="page-card">
+      <div v-show="activeSection === 'contracts'" class="page-card workspace-panel">
         <div class="section-head section-head--compact">
           <div>
             <span class="eyebrow">租赁合同</span>
@@ -147,7 +221,7 @@
         </div>
       </div>
 
-      <div class="page-card">
+      <div v-show="activeSection === 'payments'" class="page-card workspace-panel">
         <div class="section-head section-head--compact">
           <div>
             <span class="eyebrow">账单支付</span>
@@ -202,7 +276,7 @@
               </div>
             </div>
 
-            <div class="manage-item__actions" v-if="payment.status === 'pending'">
+            <div class="manage-item__actions" v-if="['pending', 'overdue'].includes(payment.status)">
               <label class="field field--inline">
                 <span>支付方式</span>
                 <select v-model="paymentMethods[payment.id]">
@@ -214,6 +288,9 @@
               <button class="primary-button" type="button" @click="handlePay(payment.id)">
                 立即支付
               </button>
+              <button class="ghost-button" type="button" @click="handlePaymentFail(payment.id)">
+                标记失败
+              </button>
             </div>
           </article>
         </div>
@@ -224,7 +301,7 @@
         </div>
       </div>
 
-      <div class="dashboard-grid">
+      <div v-show="activeSection === 'requests'" class="dashboard-grid workspace-panel">
         <div class="page-card">
           <div class="section-head section-head--compact">
             <div>
@@ -305,7 +382,7 @@
         </div>
       </div>
 
-      <div class="dashboard-grid">
+      <div v-show="activeSection === 'progress'" class="dashboard-grid workspace-panel">
         <div class="page-card">
           <div class="section-head section-head--compact">
             <div>
@@ -406,11 +483,14 @@
       </div>
 
       <MessageCenter
+        v-show="activeSection === 'messages'"
+        class="workspace-panel"
         eyebrow="消息中心"
         title="房源会话"
         description="查看房东回复、处理未读消息，并直接继续沟通。"
         empty-text="可以从房源详情页发起第一条咨询。"
       />
+      </div>
     </div>
   </section>
 </template>
@@ -422,8 +502,21 @@ import MessageCenter from "../../components/MessageCenter.vue";
 import { fetchMyBookings, updateBookingStatus } from "../../api/booking";
 import { createComplaint, fetchMyComplaints } from "../../api/complaint";
 import { fetchMyContracts, signContract } from "../../api/contract";
-import { fetchMyPayments, payPayment } from "../../api/payment";
+import { failPayment, fetchMyPayments, payPayment } from "../../api/payment";
 import { createRepair, fetchMyRepairs } from "../../api/repair";
+import { fetchRentalHistory } from "../../api/user";
+
+const tenantSections = [
+  { key: "overview", label: "租赁概览" },
+  { key: "bookings", label: "看房预约" },
+  { key: "contracts", label: "租赁合同" },
+  { key: "payments", label: "账单支付" },
+  { key: "requests", label: "服务提交" },
+  { key: "progress", label: "处理进度" },
+  { key: "messages", label: "消息中心" },
+];
+
+const activeSection = ref("overview");
 
 const defaultRepairForm = () => ({
   house_id: "",
@@ -452,12 +545,14 @@ const contracts = ref([]);
 const payments = ref([]);
 const repairs = ref([]);
 const complaints = ref([]);
+const history = ref(null);
 const loading = reactive({
   bookings: false,
   contracts: false,
   payments: false,
   repairs: false,
   complaints: false,
+  history: false,
   submitRepair: false,
   submitComplaint: false,
 });
@@ -467,6 +562,7 @@ const errors = reactive({
   payments: "",
   repairs: "",
   complaints: "",
+  history: "",
   repairForm: "",
   complaintForm: "",
 });
@@ -633,6 +729,20 @@ async function loadComplaints() {
   }
 }
 
+async function loadHistory() {
+  loading.history = true;
+  errors.history = "";
+  try {
+    const response = await fetchRentalHistory();
+    history.value = response.data.data;
+  } catch (error) {
+    errors.history = error.message || "加载租赁历史失败。";
+    history.value = null;
+  } finally {
+    loading.history = false;
+  }
+}
+
 function resetBookingFilters() {
   bookingFilters.status = "";
   loadBookings();
@@ -704,6 +814,19 @@ async function handlePay(paymentId) {
   }
 }
 
+async function handlePaymentFail(paymentId) {
+  errors.payments = "";
+  try {
+    await failPayment(paymentId, {
+      payment_method: paymentMethods[paymentId] || "bank",
+      reason: "tenant marked payment failed",
+    });
+    await loadPayments();
+  } catch (error) {
+    errors.payments = error.message || "标记支付失败失败。";
+  }
+}
+
 async function handleCreateRepair() {
   errors.repairForm = "";
   messages.repairForm = "";
@@ -756,6 +879,7 @@ async function handleCreateComplaint() {
 }
 
 onMounted(async () => {
+  await loadHistory();
   await loadBookings();
   await loadContracts();
   await loadPayments();

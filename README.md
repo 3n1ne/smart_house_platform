@@ -1,47 +1,83 @@
 # 智能房屋租赁系统
 
-基于 Vue 3 + Flask + MySQL 的智能房屋租赁系统。
+基于 Vue 3、Flask 和 MySQL 的房屋租赁管理系统，覆盖房源发布、房源搜索、预约看房、合同签署、租金支付、消息沟通、维修投诉、新闻公告、管理员报表和系统监控。
 
 ## 项目结构
 
-- `backend/`：Flask 后端项目
-- `frontend/`：Vue 3 前端项目
-- `docs/`：需求分解、数据库设计与 API 说明
-
-## 当前进度
-
-1. 初始项目脚手架已完成。
-2. 数据库设计和后端模型骨架已完成。
-3. 核心 REST API 契约设计已完成。
-4. 前端认证流程和房源浏览页面已对接后端 API。
-5. 房东端房源管理页面已对接房源管理 API。
-6. 预约流程已对接后端 API 和前端租客/房东仪表盘。
-7. 合同创建、合同签署和支付流程已对接后端 API 和前端仪表盘。
-8. 维修、投诉、报表和监控流程已对接后端 API 和角色仪表盘。
-9. 房东端房源管理的真实媒体上传、预览和删除已对接。
-10. 关键写操作的操作日志已对接，并通过管理员监控概览展示。
-11. 管理员用户管理已对接角色/状态/关键词筛选和账号启用/禁用操作。
-12. 新闻和公告管理已对接房东/管理员发布和公开公告浏览。
-13. 后端测试基础设施已添加，包含基于 SQLite 的 pytest 覆盖，涵盖认证、房源发布/浏览和新闻生命周期 API。
-14. Alembic 迁移基线已添加，包含核心 schema 和角色种子数据，以及端到端租赁流程 API 覆盖。
-
-## 后端数据库迁移
-
-从 `backend/` 目录运行数据库迁移：
-
-```powershell
-$env:FLASK_CONFIG = "production"
-$env:AUTO_CREATE_DB = "false"
-$env:DATABASE_URI = "mysql+pymysql://user:password@host:3306/rent_house"
-..\.venv\Scripts\flask.exe --app run:app db upgrade
+```text
+backend/        Flask API、数据模型、迁移脚本和后端测试
+frontend/       Vue 3 + Vite 前端应用
+deploy/         生产反向代理参考配置
+scripts/        部署、备份、性能、安全和兼容性验收脚本
+docs/           API、数据库、部署与验收文档
+requirement.md  原始需求说明
 ```
 
-## 迭代计划
+主应用只有 `backend/` 和 `frontend/` 两个工程。测试缓存、构建产物、依赖目录和旧 React 原型不属于源码结构。
 
-1. 设计数据库 schema。
-2. 定义 REST API 契约。
-3. 实现认证和房源管理模块。
-4. 实现租赁流程、消息和维修模块。
-5. 完善报表、监控和部署支持。
-6. 扩展自动化测试并添加 Alembic 迁移脚本用于生产 schema 管理。
-7. 添加部署配置、种子数据/管理员引导策略和更广泛的回归覆盖。
+## 后端运行
+
+后端默认读取 MySQL 连接。开发前先创建虚拟环境并安装依赖：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\pip.exe install -r backend\requirements.txt
+Copy-Item backend\.env.example backend\.env
+```
+
+按本机数据库修改 `backend\.env` 中的 `DATABASE_URI` 后启动：
+
+```powershell
+Set-Location backend
+..\.venv\Scripts\flask.exe --app run:app run
+```
+
+生产或生产等价环境不要依赖自动建表，应执行 Alembic 迁移：
+
+```powershell
+Set-Location backend
+$env:FLASK_CONFIG = "production"
+$env:AUTO_CREATE_DB = "false"
+..\.venv\Scripts\flask.exe --app run:app db upgrade
+..\.venv\Scripts\flask.exe --app run:app seed-admin
+```
+
+## 前端运行
+
+```powershell
+Set-Location frontend
+npm install
+npm run dev
+```
+
+前端环境变量在 `frontend\.env.example` 中。默认同源访问 `/api` 和 `/uploads`；前后端分离部署时调整 `VITE_API_BASE_URL` 和 `VITE_ASSET_BASE_URL`。
+
+## 验证命令
+
+后端回归测试使用 SQLite 测试库：
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend\tests
+```
+
+前端生产构建：
+
+```powershell
+Set-Location frontend
+npm run build
+```
+
+生产验收脚本集中在 `scripts/`，包括数据库迁移、后端启动、MySQL 备份、性能压测、安全回归和页面可达性检查。详细说明见 [部署与验收](docs/deployment.md)。
+
+## 主要能力
+
+系统已实现三类角色权限控制、JWT 登录注册、动态验证码/MFA、敏感资料加密与脱敏、房源媒体上传、智能搜索聚合和推荐、租赁流程闭环、操作日志、管理员引导、报表监控和后端回归测试。
+
+剩余工作主要依赖真实部署环境：2 秒响应和 1000 并发压测记录、HTTPS 证书部署、防火墙/IDS/WAF 配置、漏洞扫描报告，以及 Chrome、Firefox、Edge、360 和移动端兼容性人工验收记录。
+
+## 文档
+
+- [API 设计](docs/api-design.md)
+- [数据库设计](docs/database-design.md)
+- [部署与验收](docs/deployment.md)
+- [文档索引](docs/README.md)

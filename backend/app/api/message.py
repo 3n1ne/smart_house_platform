@@ -42,6 +42,53 @@ def _base_message_query():
     )
 
 
+def _build_house_auto_reply(house):
+    parts = [
+        f"已收到咨询。{house.title} 当前状态为 {house.status}。",
+        f"月租 {house.rent} 元，户型 {house.layout or '待补充'}，面积 {house.area} 平方米。",
+    ]
+    if house.decoration:
+        parts.append(f"装修情况：{house.decoration}。")
+    if house.community or house.district:
+        parts.append(
+            "位置："
+            + " ".join(
+                item
+                for item in [house.city, house.district, house.community]
+                if item
+            )
+            + "。"
+        )
+    parts.append("房东看到消息后会继续回复具体看房安排。")
+    return "".join(parts)
+
+
+def _maybe_create_house_auto_reply(sender, receiver, house):
+    if not house or not sender.role or sender.role.code != "tenant":
+        return None
+    if receiver.id != house.landlord_id:
+        return None
+
+    auto_reply = Message(
+        sender_id=receiver.id,
+        receiver_id=sender.id,
+        house_id=house.id,
+        content=_build_house_auto_reply(house),
+        is_read=False,
+    )
+    db.session.add(auto_reply)
+    db.session.flush()
+    log_operation(
+        "message",
+        "auto_reply",
+        target_type="message",
+        target_id=auto_reply.id,
+        detail={"house_id": house.id, "tenant_id": sender.id},
+        operator_id=receiver.id,
+    )
+    return auto_reply
+
+
 @message_bp.get("/conversations")
 @jwt_required()
 def list_conversations():
@@ -240,6 +287,7 @@ def create_message():
     )
     db.session.add(message)
     db.session.flush()
+    auto_reply = _maybe_create_house_auto_reply(user, receiver, house)
     log_operation(
         "message",
         "send",
@@ -250,8 +298,12 @@ def create_message():
     )
     db.session.commit()
 
+    response_data = serialize_message(message, current_user_id=user.id)
+    if auto_reply:
+        response_data["auto_reply"] = serialize_message(auto_reply, current_user_id=user.id)
+
     return success_response(
-        serialize_message(message, current_user_id=user.id),
+        response_data,
         message="message sent",
         status=201,
     )

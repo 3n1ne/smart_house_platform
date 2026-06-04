@@ -1,6 +1,28 @@
 <template>
-  <section class="page-shell">
-    <div class="stack-section">
+  <section class="page-shell page-shell--dashboard">
+    <div class="workspace-shell">
+      <aside class="workspace-sidebar" aria-label="管理员功能导航">
+        <div class="workspace-sidebar__header">
+          <p class="workspace-sidebar__title">管理工作台</p>
+          <p class="workspace-sidebar__text">按管理对象切换模块，概览、内容、用户和投诉各自独立。</p>
+        </div>
+
+        <nav class="workspace-nav">
+          <button
+            v-for="(item, index) in adminSections"
+            :key="item.key"
+            class="workspace-nav__button"
+            :class="{ 'workspace-nav__button--active': activeSection === item.key }"
+            type="button"
+            @click="activeSection = item.key"
+          >
+            <span class="workspace-nav__index">{{ String(index + 1).padStart(2, "0") }}</span>
+            <span>{{ item.label }}</span>
+          </button>
+        </nav>
+      </aside>
+
+      <div class="workspace-content stack-section">
       <div class="hero-card dashboard-hero">
         <div>
           <span class="eyebrow">管理员控制台</span>
@@ -10,7 +32,7 @@
         <RouterLink class="secondary-button" to="/houses">查看公开房源</RouterLink>
       </div>
 
-      <div class="dashboard-grid">
+      <div v-show="activeSection === 'overview'" class="dashboard-grid workspace-panel">
         <div class="page-card">
           <div class="section-head section-head--compact">
             <div>
@@ -38,6 +60,10 @@
                   <span>已收金额：¥{{ report.totals.paid_amount }}</span>
                   <span>待收金额：¥{{ report.totals.pending_payment_amount }}</span>
                 </div>
+                <div class="booking-meta">
+                  <span>出租率：{{ formatPercent(report.totals.occupancy_rate) }}</span>
+                  <span>30 天活跃用户：{{ report.totals.active_users_30d }}</span>
+                </div>
               </div>
             </article>
 
@@ -56,6 +82,13 @@
                   <span>投诉：{{ formatStatusMap(report.complaints_by_status) }}</span>
                   <span>公告：{{ formatStatusMap(report.news_by_status) }}</span>
                 </div>
+              </div>
+            </article>
+
+            <article class="manage-item">
+              <div class="manage-item__main">
+                <h3 class="house-title house-title--small">租金收入趋势</h3>
+                <p class="page-text">{{ formatIncomeTrend(report.rent_income_trend) }}</p>
               </div>
             </article>
           </div>
@@ -100,9 +133,9 @@
         </div>
       </div>
 
-      <NewsManager />
+      <NewsManager v-show="activeSection === 'news'" class="workspace-panel" />
 
-      <div class="page-card">
+      <div v-show="activeSection === 'users'" class="page-card workspace-panel">
         <div class="section-head section-head--compact">
           <div>
             <span class="eyebrow">用户管理</span>
@@ -189,7 +222,7 @@
         </div>
       </div>
 
-      <div class="page-card">
+      <div v-show="activeSection === 'complaints'" class="page-card workspace-panel">
         <div class="section-head section-head--compact">
           <div>
             <span class="eyebrow">投诉管理</span>
@@ -250,6 +283,7 @@
           <p class="page-text">租客或房东提交的投诉会显示在这里。</p>
         </div>
       </div>
+      </div>
     </div>
   </section>
 </template>
@@ -262,6 +296,15 @@ import { fetchMyComplaints, updateComplaintStatus } from "../../api/complaint";
 import { fetchMonitorOverview } from "../../api/monitor";
 import { fetchReportOverview } from "../../api/report";
 import { fetchUsers, updateUserStatus } from "../../api/user";
+
+const adminSections = [
+  { key: "overview", label: "系统概览" },
+  { key: "news", label: "公告管理" },
+  { key: "users", label: "用户管理" },
+  { key: "complaints", label: "投诉处理" },
+];
+
+const activeSection = ref("overview");
 
 const report = ref(null);
 const monitor = ref(null);
@@ -291,6 +334,17 @@ function formatStatusMap(map) {
   return Object.entries(map)
     .map(([key, value]) => `${formatStatusKey(key)}：${value}`)
     .join("，");
+}
+
+function formatPercent(value) {
+  return `${Math.round((value || 0) * 10000) / 100}%`;
+}
+
+function formatIncomeTrend(items) {
+  if (!items?.length) {
+    return "暂无已支付账单。";
+  }
+  return items.map((item) => `${item.month}：¥${item.amount}`).join("，");
 }
 
 function formatStatusKey(key) {

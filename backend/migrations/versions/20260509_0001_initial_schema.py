@@ -80,7 +80,7 @@ def upgrade():
         sa.Column("real_name", sa.String(length=80), nullable=True),
         sa.Column("avatar_url", sa.String(length=255), nullable=True),
         sa.Column("gender", sa.String(length=20), nullable=True),
-        sa.Column("identity_no", sa.String(length=64), nullable=True),
+        sa.Column("identity_no", sa.String(length=255), nullable=True),
         sa.Column("status", sa.String(length=20), nullable=False),
         sa.Column("is_mfa_enabled", sa.Boolean(), nullable=False),
         sa.Column("last_login_at", sa.DateTime(), nullable=True),

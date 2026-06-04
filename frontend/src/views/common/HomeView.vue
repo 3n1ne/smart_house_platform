@@ -1,27 +1,60 @@
 <template>
-  <section class="page-shell page-shell--wide">
-    <div class="page-shell">
-      <div class="hero-card">
-        <div>
-          <span class="eyebrow">现代租住服务</span>
-          <h1 class="hero-title">安静找房<br />从容入住</h1>
+  <section class="page-shell page-shell--wide home-page">
+    <div class="home-hero-wrap">
+      <div class="hero-card home-hero">
+        <div class="home-hero__content">
+          <span class="eyebrow">智慧租房</span>
+          <h1 class="hero-title">清晰找房<br />安心入住</h1>
           <p class="hero-text">
-            用更克制、更清晰的方式完成找房、预约、签约、付款和沟通。
+            为您提供一站式服务
           </p>
-        </div>
 
-        <form class="editorial-search" @submit.prevent="goExplore">
-          <input
-            v-model.trim="keyword"
-            type="text"
-            placeholder="输入城市、小区或地址"
-          />
-          <button class="primary-button" type="submit">搜索</button>
-        </form>
+          <form class="editorial-search home-hero__search" @submit.prevent="goExplore">
+            <input
+              v-model.trim="keyword"
+              type="text"
+              placeholder="输入城市、小区或地址"
+            />
+            <button class="primary-button" type="submit">搜索房源</button>
+          </form>
+
+          <div class="home-hero__metrics" aria-label="常用功能">
+            <span><strong>房源</strong> 按条件筛选</span>
+            <span><strong>预约</strong> 提交看房时间</span>
+            <span><strong>账单</strong> 查看付款状态</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="feature-split">
+    <div class="page-shell home-section">
+      <div class="section-head home-section__head">
+        <div>
+          <h2 class="page-title page-title--section">常用入口</h2>
+        </div>
+        <RouterLink class="secondary-button" to="/houses">查看房源</RouterLink>
+      </div>
+
+      <div class="home-action-grid">
+        <RouterLink class="home-action-card" to="/houses">
+          <span class="tag">找房</span>
+          <h3 class="house-title house-title--small">浏览房源</h3>
+          <p class="page-text">按城市、区域、户型和租金筛选。</p>
+        </RouterLink>
+        <RouterLink class="home-action-card" to="/register">
+          <span class="tag tag--light">账户</span>
+          <h3 class="house-title house-title--small">选择身份</h3>
+          <p class="page-text">租客看房，房东发布房源。</p>
+        </RouterLink>
+        <RouterLink class="home-action-card" to="/news">
+          <span class="tag">公告</span>
+          <h3 class="house-title house-title--small">查看通知</h3>
+          <p class="page-text">了解房源维护和平台服务信息。</p>
+        </RouterLink>
+      </div>
+    </div>
+
+    <div class="feature-split home-feature">
       <article class="feature-main">
         <div class="feature-image">
           <img
@@ -29,66 +62,32 @@
             alt="精选住宅室内空间"
           />
         </div>
-        <h2 class="page-title page-title--section">空间、流程与信任</h2>
+        <h2 class="page-title page-title--section">信息清楚，操作便捷</h2>
         <p class="page-text">
-          房源不只是一组价格和面积。平台把真实房源、预约流程、合同和账单放在一个连续的体验里，让租住决策更安静、更确定。
+          每套房源展示价格、户型、面积、位置和状态。登录后可以预约看房、联系房东，并查看合同和账单。
         </p>
       </article>
 
       <aside class="feature-side">
         <div class="dispatch-list">
           <article>
-            <span class="editorial-label">真实</span>
-            <h3 class="house-title house-title--small">真实房源</h3>
-            <p class="page-text">房源发布、状态管理和公开浏览统一接入后端数据。</p>
+            <span class="editorial-label">房源</span>
+            <h3 class="house-title house-title--small">公开展示</h3>
+            <p class="page-text">房东发布后，租客可按条件查找。</p>
           </article>
           <article>
-            <span class="editorial-label">流程</span>
-            <h3 class="house-title house-title--small">流程闭环</h3>
-            <p class="page-text">从预约到合同、付款、消息，租客和房东各自拥有控制台。</p>
+            <span class="editorial-label">看房</span>
+            <h3 class="house-title house-title--small">预约沟通</h3>
+            <p class="page-text">租客提交时间，房东在控制台处理。</p>
           </article>
           <div class="dark-panel">
-            <span class="editorial-label">精选房源</span>
+            <span class="editorial-label">房源大厅</span>
             <h3 class="house-title house-title--small">开始浏览</h3>
-            <p class="page-text">浏览公开房源，找到适合自己的下一处居所。</p>
+            <p class="page-text">直接查看当前可浏览的房源。</p>
             <RouterLink class="primary-button" to="/houses">查看房源</RouterLink>
           </div>
         </div>
       </aside>
-    </div>
-
-    <div class="page-shell">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">平台能力</span>
-          <h2 class="page-title page-title--section">把租房流程收拢到一处</h2>
-        </div>
-        <RouterLink class="text-link" to="/register">创建账号</RouterLink>
-      </div>
-
-      <div class="house-grid" style="margin-top: 40px">
-        <article class="house-card">
-          <div class="house-content">
-            <span class="tag">认证</span>
-            <h3 class="house-title">统一认证</h3>
-            <p class="page-text">租客、房东和管理员按角色进入各自工作台。</p>
-          </div>
-        </article>
-        <article class="house-card">
-          <div class="house-content">
-            <span class="tag tag--light">管理</span>
-            <h3 class="house-title">房源管理</h3>
-            <p class="page-text">房东可以创建、编辑、上架、下架和删除房源。</p>
-          </div>
-        </article>
-        <article class="house-card">
-          <div class="house-content">
-            <span class="tag">沟通</span>
-            <h3 class="house-title">在线沟通</h3>
-            <p class="page-text">租客可在详情页联系房东，并在控制台继续对话。</p>
-          </div>
-        </article>
-      </div>
     </div>
   </section>
 </template>

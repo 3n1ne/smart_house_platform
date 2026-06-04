@@ -18,7 +18,9 @@ def test_register_login_and_me(client):
 
     duplicate = register_user(client, "tenant_001", role="tenant")
     assert duplicate.status_code == 409
-    assert duplicate.get_json()["code"] == 4009
+    duplicate_body = duplicate.get_json()
+    assert duplicate_body["code"] == 4009
+    assert duplicate_body["errors"]["fields"] == ["username"]
 
     headers = login_user(client, "tenant_001")
     me = client.get("/api/auth/me", headers=headers)

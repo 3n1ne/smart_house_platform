@@ -51,6 +51,84 @@
 
       <p v-if="errorMessage" class="form-message form-message--error">{{ errorMessage }}</p>
 
+      <section class="page-card search-insights">
+        <div class="section-head section-head--compact">
+          <div>
+            <span class="eyebrow">筛选建议</span>
+            <h2 class="page-title page-title--section">按地区和户型快速查看</h2>
+          </div>
+          <button class="ghost-button" type="button" :disabled="insightsLoading" @click="loadInsights">
+            {{ insightsLoading ? "刷新中..." : "刷新推荐" }}
+          </button>
+        </div>
+
+        <p v-if="insightsError" class="form-message form-message--error">{{ insightsError }}</p>
+
+        <div class="insight-grid">
+          <div>
+            <span class="editorial-label">地区</span>
+            <div v-if="regions.length" class="insight-list">
+              <button
+                v-for="region in regions"
+                :key="`${region.city}-${region.district}-${region.community || 'all'}`"
+                class="insight-button"
+                type="button"
+                @click="applyRegion(region)"
+              >
+                <strong>{{ formatRegion(region) }}</strong>
+                <span>{{ region.house_count }} 套 | ¥{{ region.min_rent }} - ¥{{ region.max_rent }}</span>
+              </button>
+            </div>
+            <p v-else class="page-text">暂无地区数据。</p>
+          </div>
+
+          <div>
+            <span class="editorial-label">户型</span>
+            <div v-if="layouts.length" class="insight-list">
+              <button
+                v-for="layout in layouts"
+                :key="layout.layout"
+                class="insight-button"
+                type="button"
+                @click="applyLayout(layout.layout)"
+              >
+                <strong>{{ layout.layout }}</strong>
+                <span>{{ layout.house_count }} 套 | ¥{{ layout.min_rent }} - ¥{{ layout.max_rent }}</span>
+              </button>
+            </div>
+            <p v-else class="page-text">暂无户型数据。</p>
+          </div>
+        </div>
+
+        <div v-if="recommendations.length" class="recommendation-strip">
+          <span class="editorial-label">推荐房源</span>
+          <div class="house-grid house-grid--compact">
+            <RouterLink
+              v-for="house in recommendations"
+              :key="house.id"
+              class="house-card"
+              :to="`/houses/${house.id}`"
+            >
+              <div class="house-cover house-cover--compact">
+                <img v-if="house.cover_url" :src="resolveAssetUrl(house.cover_url)" :alt="house.title" />
+                <div v-else class="house-cover__placeholder">暂无图片</div>
+              </div>
+              <div class="house-content">
+                <div class="house-meta">
+                  <span class="tag">{{ house.layout || "户型待补充" }}</span>
+                  <span class="tag tag--light">{{ house.city }} {{ house.district }}</span>
+                </div>
+                <h3 class="house-title house-title--small">{{ house.title }}</h3>
+                <div class="house-footer">
+                  <strong class="price price--compact">¥{{ house.rent }}/月</strong>
+                  <span class="text-link">查看</span>
+                </div>
+              </div>
+            </RouterLink>
+          </div>
+        </div>
+      </section>
+
       <div v-if="houses.length" class="house-grid">
         <RouterLink
           v-for="(house, index) in houses"
@@ -59,7 +137,7 @@
           :to="`/houses/${house.id}`"
         >
           <div class="house-cover">
-            <img v-if="house.cover_url" :src="house.cover_url" :alt="house.title" />
+            <img v-if="house.cover_url" :src="resolveAssetUrl(house.cover_url)" :alt="house.title" />
             <div v-else class="house-cover__placeholder">暂无图片</div>
             <span v-if="index === 0" class="tag" style="position: absolute; top: 0; left: 0">
               新上架
@@ -112,6 +190,12 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
 import { fetchHouseList } from "../../api/house";
+import { resolveAssetUrl } from "../../api/assets";
+import {
+  fetchSearchLayouts,
+  fetchSearchRecommendations,
+  fetchSearchRegions,
+} from "../../api/search";
 
 const route = useRoute();
 const filters = reactive({
@@ -125,10 +209,15 @@ const filters = reactive({
 
 const loading = ref(false);
 const errorMessage = ref("");
+const insightsError = ref("");
 const houses = ref([]);
+const regions = ref([]);
+const layouts = ref([]);
+const recommendations = ref([]);
 const page = ref(1);
 const pageSize = ref(6);
 const total = ref(0);
+const insightsLoading = ref(false);
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
 
@@ -138,6 +227,17 @@ function buildParams() {
     page: page.value,
     page_size: pageSize.value,
   };
+}
+
+function buildInsightParams() {
+  return Object.fromEntries(
+    Object.entries({
+      city: filters.city,
+      district: filters.district,
+      layout: filters.layout,
+      keyword: filters.keyword,
+    }).filter(([, value]) => value !== "" && value !== null && value !== undefined)
+  );
 }
 
 async function loadHouses() {
@@ -154,6 +254,30 @@ async function loadHouses() {
     total.value = 0;
   } finally {
     loading.value = false;
+  }
+  loadInsights();
+}
+
+async function loadInsights() {
+  insightsLoading.value = true;
+  insightsError.value = "";
+  try {
+    const params = buildInsightParams();
+    const [regionResponse, layoutResponse, recommendationResponse] = await Promise.all([
+      fetchSearchRegions(params),
+      fetchSearchLayouts(params),
+      fetchSearchRecommendations({ city: filters.city || undefined, limit: 3 }),
+    ]);
+    regions.value = regionResponse.data.data.slice(0, 6);
+    layouts.value = layoutResponse.data.data.slice(0, 6);
+    recommendations.value = recommendationResponse.data.data;
+  } catch (error) {
+    insightsError.value = error.message || "智能搜索数据加载失败。";
+    regions.value = [];
+    layouts.value = [];
+    recommendations.value = [];
+  } finally {
+    insightsLoading.value = false;
   }
 }
 
@@ -173,9 +297,36 @@ function changePage(nextPage) {
   loadHouses();
 }
 
+function applyRegion(region) {
+  filters.city = region.city || "";
+  filters.district = region.district || "";
+  filters.keyword = region.community || "";
+  page.value = 1;
+  loadHouses();
+}
+
+function applyLayout(layout) {
+  filters.layout = layout || "";
+  page.value = 1;
+  loadHouses();
+}
+
+function formatRegion(region) {
+  return [region.city, region.district, region.community].filter(Boolean).join(" / ");
+}
+
 onMounted(() => {
   if (typeof route.query.keyword === "string") {
     filters.keyword = route.query.keyword;
+  }
+  if (typeof route.query.city === "string") {
+    filters.city = route.query.city;
+  }
+  if (typeof route.query.district === "string") {
+    filters.district = route.query.district;
+  }
+  if (typeof route.query.layout === "string") {
+    filters.layout = route.query.layout;
   }
   loadHouses();
 });

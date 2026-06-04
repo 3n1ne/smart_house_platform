@@ -33,6 +33,15 @@
             <input v-model="form.password" type="password" placeholder="请输入密码" />
           </label>
 
+          <label class="field">
+            <span>动态验证码</span>
+            <input v-model.trim="form.verification_code" type="text" inputmode="numeric" placeholder="开启双因素账号需填写" />
+          </label>
+
+          <button class="secondary-button" type="button" :disabled="codeSubmitting || !form.username" @click="handleRequestCode">
+            {{ codeSubmitting ? "发送中..." : "获取动态验证码" }}
+          </button>
+
           <p v-if="errorMessage" class="form-message form-message--error">{{ errorMessage }}</p>
           <p v-if="successMessage" class="form-message form-message--success">{{ successMessage }}</p>
 
@@ -54,6 +63,7 @@
 import { reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
+import { requestVerificationCode } from "../../api/auth";
 import { useAuthStore } from "../../stores/auth";
 
 const authStore = useAuthStore();
@@ -63,11 +73,39 @@ const router = useRouter();
 const form = reactive({
   username: "",
   password: "",
+  verification_code: "",
 });
 
 const submitting = ref(false);
+const codeSubmitting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+
+async function handleRequestCode() {
+  errorMessage.value = "";
+  successMessage.value = "";
+
+  if (!form.username) {
+    errorMessage.value = "请先输入账号。";
+    return;
+  }
+
+  codeSubmitting.value = true;
+  try {
+    const response = await requestVerificationCode({ username: form.username });
+    const payload = response.data.data;
+    if (payload.verification_code) {
+      form.verification_code = payload.verification_code;
+      successMessage.value = "动态验证码已生成并填入表单。";
+    } else {
+      successMessage.value = "动态验证码已发送，请在有效期内登录。";
+    }
+  } catch (error) {
+    errorMessage.value = error.message || "动态验证码获取失败。";
+  } finally {
+    codeSubmitting.value = false;
+  }
+}
 
 async function handleSubmit() {
   errorMessage.value = "";
@@ -80,7 +118,11 @@ async function handleSubmit() {
 
   submitting.value = true;
   try {
-    await authStore.login(form);
+    await authStore.login({
+      username: form.username,
+      password: form.password,
+      verification_code: form.verification_code || undefined,
+    });
     successMessage.value = "登录成功，正在跳转。";
     const redirect = route.query.redirect;
     const fallbackRoute = authStore.dashboardRoute || "/";

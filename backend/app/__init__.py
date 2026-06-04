@@ -1,6 +1,7 @@
 from flask import Flask, send_from_directory
 
 from .api import register_blueprints
+from .cli import register_cli
 from .config import config_by_name
 from .extensions import init_extensions
 from .services.bootstrap import seed_roles
@@ -14,6 +15,7 @@ def create_app(config_name: str = "development", config_overrides: dict | None =
 
     init_extensions(app)
     register_blueprints(app)
+    register_cli(app)
 
     from . import models  # noqa: F401
     from .extensions import db

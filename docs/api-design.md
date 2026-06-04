@@ -98,6 +98,8 @@
 | email | string | 否 | 邮箱 |
 | phone | string | 否 | 手机号 |
 | real_name | string | 否 | 真实姓名 |
+| identity_no | string | 否 | 身份证号，后端加密存储且响应只返回脱敏值 |
+| enable_mfa | bool | 否 | 是否启用动态验证码登录 |
 
 响应数据：
 
@@ -106,6 +108,25 @@
 | user_id | int | 创建的用户 ID |
 | username | string | 用户名 |
 | role | string | 用户角色 |
+
+### `POST /api/auth/verification-code`
+
+为登录生成动态验证码。
+
+请求体：
+
+| 字段 | 类型 | 必填 | 描述 |
+| --- | --- | --- | --- |
+| username | string | 是 | 用户名、手机号或邮箱 |
+
+响应数据：
+
+| 字段 | 类型 | 描述 |
+| --- | --- | --- |
+| expires_in | int | 验证码有效秒数 |
+| expires_at | string | 验证码过期时间，用户存在且可用时返回 |
+| delivery | string | `response` 或配置的发送渠道 |
+| verification_code | string | 开发/测试环境可见；生产默认不返回 |
 
 ### `POST /api/auth/login`
 
@@ -117,6 +138,7 @@
 | --- | --- | --- | --- |
 | username | string | 是 | 用户名、手机号或邮箱 |
 | password | string | 是 | 明文密码 |
+| verification_code | string | 否 | 开启双因素或全局 MFA 时必填 |
 
 响应数据：
 
@@ -158,6 +180,8 @@
 | real_name | string | 真实姓名 |
 | avatar_url | string | 头像 URL |
 | status | string | 用户状态 |
+| identity_no_masked | string | 脱敏身份证号 |
+| is_mfa_enabled | bool | 是否启用动态验证码登录 |
 
 ### `PUT /api/users/profile`
 
@@ -174,6 +198,31 @@
 | phone | string | 否 | 手机号 |
 | avatar_url | string | 否 | 头像 URL |
 | gender | string | 否 | 性别 |
+| identity_no | string | 否 | 身份证号，后端加密存储且响应只返回脱敏值 |
+| is_mfa_enabled | bool | 否 | 是否启用动态验证码登录 |
+
+### `GET /api/users/rental-history`
+
+获取当前用户的租赁历史摘要。
+
+权限：已认证用户
+
+行为：
+
+1. 租客返回自己相关的预约、合同、账单、维修和投诉。
+2. 房东返回自己房源相关的预约、合同、收款、维修和投诉。
+3. 管理员返回全站最近记录和总数。
+
+响应数据：
+
+| 字段 | 类型 | 描述 |
+| --- | --- | --- |
+| summary | object | 各类记录总数 |
+| recent_bookings | array | 最近预约记录 |
+| recent_contracts | array | 最近合同记录 |
+| recent_payments | array | 最近支付记录 |
+| recent_repairs | array | 最近维修记录 |
+| recent_complaints | array | 最近投诉记录 |
 
 ### `GET /api/users`
 
@@ -351,6 +400,15 @@
 
 权限：公开
 
+查询参数：
+
+| 字段 | 类型 | 必填 | 描述 |
+| --- | --- | --- | --- |
+| city | string | 否 | 城市筛选 |
+| district | string | 否 | 区域筛选 |
+| layout | string | 否 | 户型筛选 |
+| keyword | string | 否 | 标题、城市、区域、小区、地址或户型关键词 |
+
 响应条目字段：
 
 | 字段 | 类型 | 描述 |
@@ -359,6 +417,8 @@
 | district | string | 区域 |
 | community | string | 小区 |
 | house_count | int | 匹配房源数量 |
+| min_rent | number | 当前聚合内最低月租 |
+| max_rent | number | 当前聚合内最高月租 |
 
 ### `GET /api/search/layouts`
 
@@ -366,12 +426,16 @@
 
 权限：公开
 
+查询参数同 `/api/search/regions`。
+
 响应条目字段：
 
 | 字段 | 类型 | 描述 |
 | --- | --- | --- |
 | layout | string | 房源户型 |
 | house_count | int | 匹配房源数量 |
+| min_rent | number | 当前户型最低月租 |
+| max_rent | number | 当前户型最高月租 |
 
 ### `GET /api/search/recommendations`
 
@@ -386,6 +450,12 @@
 | house_id | int | 否 | 作为相似推荐基准的房源 |
 | city | string | 否 | 城市筛选 |
 | limit | int | 否 | 返回结果数量 |
+
+推荐规则：
+
+1. 提供 `house_id` 时，优先返回同城、同区、同户型或租金在基准房源上下 20% 区间内的可租房源。
+2. 相似房源不足时，回退返回最新发布的其他可租房源。
+3. 未提供 `house_id` 时，可按 `city` 返回该城市最新可租房源；未提供 `city` 时返回全站最新可租房源。
 
 ## 预约模块
 
@@ -533,6 +603,48 @@
 | payment_method | string | 是 | 如 `bank`、`alipay` 或 `wechat` |
 | transaction_no | string | 否 | 可选交易参考号 |
 
+行为：
+
+1. 只允许付款方租客或管理员处理待支付/逾期账单。
+2. 未传入 `transaction_no` 时，后端生成模拟交易流水号，用于开发阶段闭环。
+
+### `PATCH /api/payments/{payment_id}/fail`
+
+将待支付或逾期支付标记为失败。
+
+权限：付款方租客或管理员
+
+请求体：
+
+| 字段 | 类型 | 必填 | 描述 |
+| --- | --- | --- | --- |
+| payment_method | string | 否 | 失败支付方式 |
+| reason | string | 否 | 失败原因 |
+
+### `PATCH /api/payments/{payment_id}/refund`
+
+将已支付账单登记为已退款。
+
+权限：收款方房东或管理员
+
+请求体：
+
+| 字段 | 类型 | 必填 | 描述 |
+| --- | --- | --- | --- |
+| reason | string | 否 | 退款原因 |
+
+### `POST /api/payments/overdue-scan`
+
+扫描并标记已过期的待支付账单。
+
+权限：房东或管理员
+
+行为：
+
+1. 房东只扫描自己作为收款方的账单。
+2. 管理员扫描所有账单。
+3. `due_date` 早于当前日期且状态为 `pending` 的账单会更新为 `overdue`。
+
 ## 消息模块
 
 ### `GET /api/messages/conversations`
@@ -585,6 +697,7 @@
 
 1. 发送者不能给自己发消息。
 2. 当提供 `house_id` 时，会话必须涉及该房源的房东。
+3. 租客向房源房东发起带 `house_id` 的咨询时，系统会基于房源标题、租金、户型、面积、装修和位置生成一条基础自动回复；房东仍可继续人工回复。
 
 ### `PATCH /api/messages/read`
 
@@ -707,7 +820,7 @@
 
 权限：仅管理员
 
-响应数据包括用户、房源、预约、合同、支付、维修、投诉的总数，已支付金额、待支付金额以及各分组状态计数。
+响应数据包括用户、房源、预约、合同、支付、维修、投诉的总数，已支付金额、待支付金额、出租率、30 天活跃用户、租金收入趋势以及各分组状态计数。
 
 ## 监控模块
 
@@ -803,6 +916,7 @@
 | 4003 | 权限拒绝 |
 | 4004 | 资源未找到 |
 | 4009 | 资源重复 |
+| 4010 | 动态验证码缺失、过期或错误 |
 | 5000 | 内部服务器错误 |
 
 ## 实现说明

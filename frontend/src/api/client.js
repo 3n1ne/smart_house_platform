@@ -1,8 +1,11 @@
 import axios from "axios";
 
 
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+
+
 const client = axios.create({
-  baseURL: "/api",
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
 
@@ -18,9 +21,14 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    const apiMessage = error.response?.data?.message;
+    const apiData = error.response?.data;
+    const apiMessage = apiData?.message;
     const fallbackMessage = error.message || "请求失败";
-    return Promise.reject(new Error(apiMessage || fallbackMessage));
+    const normalizedError = new Error(apiMessage || fallbackMessage);
+    normalizedError.code = apiData?.code;
+    normalizedError.errors = apiData?.errors;
+    normalizedError.status = error.response?.status;
+    return Promise.reject(normalizedError);
   }
 );
 

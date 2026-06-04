@@ -10,8 +10,8 @@
         </div>
         <div class="auth-hero__content">
           <span class="eyebrow">创建账号</span>
-          <h1 class="page-title">加入平台</h1>
-          <p class="page-text">选择租客或房东身份，进入完整租住流程。</p>
+          <h1 class="page-title">创建账号</h1>
+          <p class="page-text">租客看房，房东发布和管理房源。</p>
         </div>
       </div>
 
@@ -52,8 +52,18 @@
           </label>
 
           <label class="field">
+            <span>身份证号</span>
+            <input v-model.trim="form.identity_no" type="text" placeholder="可选，提交后仅脱敏展示" />
+          </label>
+
+          <label class="field">
             <span>密码</span>
             <input v-model="form.password" type="password" placeholder="请输入密码" />
+          </label>
+
+          <label class="checkbox-field">
+            <input v-model="form.enable_mfa" type="checkbox" />
+            <span>启用双因素动态验证码登录</span>
           </label>
 
           <p v-if="errorMessage" class="form-message form-message--error">{{ errorMessage }}</p>
@@ -87,12 +97,29 @@ const form = reactive({
   real_name: "",
   email: "",
   phone: "",
+  identity_no: "",
   password: "",
+  enable_mfa: false,
 });
 
 const submitting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+
+function formatDuplicateRegistrationError(error) {
+  const fieldLabels = {
+    username: "用户名",
+    email: "邮箱",
+    phone: "手机号",
+  };
+  const duplicateFields = error.errors?.fields || [];
+  const duplicateLabels = duplicateFields.map((field) => fieldLabels[field]).filter(Boolean);
+
+  if (duplicateLabels.length) {
+    return `${duplicateLabels.join("、")}已被注册，请更换后再试。`;
+  }
+  return "用户名、邮箱或手机号已被注册，请更换后再试。";
+}
 
 async function handleSubmit() {
   errorMessage.value = "";
@@ -111,7 +138,11 @@ async function handleSubmit() {
       router.push("/login");
     }, 500);
   } catch (error) {
-    errorMessage.value = error.message || "注册失败，请稍后重试。";
+    if (error.code === 4009) {
+      errorMessage.value = formatDuplicateRegistrationError(error);
+    } else {
+      errorMessage.value = error.message || "注册失败，请稍后重试。";
+    }
   } finally {
     submitting.value = false;
   }

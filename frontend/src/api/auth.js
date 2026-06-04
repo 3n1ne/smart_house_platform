@@ -11,6 +11,11 @@ export function login(data) {
 }
 
 
+export function requestVerificationCode(data) {
+  return client.post("/auth/verification-code", data);
+}
+
+
 export function fetchCurrentUser() {
   return client.get("/auth/me");
 }
