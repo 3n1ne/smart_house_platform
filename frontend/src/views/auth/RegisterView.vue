@@ -26,10 +26,15 @@
           <label class="field">
             <span>角色</span>
             <select v-model="form.role">
-              <option value="tenant">租客</option>
-              <option value="landlord">房东</option>
+              <option v-for="role in roleOptions" :key="role.value" :value="role.value">
+                {{ role.label }}
+              </option>
             </select>
           </label>
+
+          <p v-if="form.role === 'admin'" class="form-message form-message--success">
+            管理员账号由系统初始化创建，不开放普通注册。请选择“已有账号？去登录”并使用管理员账号登录。
+          </p>
 
           <label class="field">
             <span>用户名</span>
@@ -105,6 +110,11 @@ const form = reactive({
 const submitting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+const roleOptions = [
+  { value: "tenant", label: "租客" },
+  { value: "landlord", label: "房东" },
+  { value: "admin", label: "管理员" },
+];
 
 function formatDuplicateRegistrationError(error) {
   const fieldLabels = {
@@ -127,6 +137,11 @@ async function handleSubmit() {
 
   if (!form.username || !form.password) {
     errorMessage.value = "用户名和密码不能为空。";
+    return;
+  }
+
+  if (form.role === "admin") {
+    errorMessage.value = "管理员不能公开注册，请使用系统初始化的管理员账号登录。";
     return;
   }
 

@@ -1,103 +1,125 @@
 <template>
-  <section class="page-shell page-shell--wide home-page">
-    <div class="home-hero-wrap">
-      <div class="hero-card home-hero">
-        <div class="home-hero__content">
-          <span class="eyebrow">智慧租房</span>
-          <h1 class="hero-title">清晰找房<br />安心入住</h1>
-          <p class="hero-text">
-            为您提供一站式服务
-          </p>
+  <section class="apt-home">
+    <section class="apt-hero">
+      <div class="apt-hero__shade">
+        <h1>寻找你的下一处住所</h1>
 
-          <form class="editorial-search home-hero__search" @submit.prevent="goExplore">
-            <input
-              v-model.trim="keyword"
-              type="text"
-              placeholder="输入城市、小区或地址"
-            />
-            <button class="primary-button" type="submit">搜索房源</button>
-          </form>
+        <form class="apt-search-box" @submit.prevent="goExplore">
+          <input v-model.trim="keyword" type="text" placeholder="输入城市、小区、学校或地址" />
+          <button type="submit">搜索</button>
+        </form>
 
-          <div class="home-hero__metrics" aria-label="常用功能">
-            <span><strong>房源</strong> 按条件筛选</span>
-            <span><strong>预约</strong> 提交看房时间</span>
-            <span><strong>账单</strong> 查看付款状态</span>
+        <div class="apt-home-tabs">
+          <button
+            v-for="item in quickSearches"
+            :key="item.label"
+            type="button"
+            @click="quickSearch(item.query)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="apt-section">
+      <div class="apt-section__head">
+        <h2>从这些方式开始找房</h2>
+        <RouterLink to="/houses">查看全部房源</RouterLink>
+      </div>
+
+      <div class="apt-entry-grid">
+        <RouterLink v-for="entry in entries" :key="entry.title" class="apt-entry-card" :to="entry.to">
+          <strong>{{ entry.title }}</strong>
+          <span>{{ entry.text }}</span>
+        </RouterLink>
+      </div>
+    </section>
+
+    <section class="apt-featured-section">
+      <h2>{{ featuredTitle }}</h2>
+
+      <p v-if="featuredError" class="apt-featured-section__error">{{ featuredError }}</p>
+
+      <div v-if="featuredHouses.length" class="apt-featured-grid">
+        <RouterLink
+          v-for="(house, index) in featuredHouses"
+          :key="house.id"
+          class="apt-featured-card"
+          :to="`/houses/${house.id}`"
+        >
+          <img :src="getHouseImage(house, index)" :alt="house.title" />
+          <div class="apt-featured-card__body">
+            <h3>{{ house.title }}</h3>
+            <p>{{ formatAddress(house) }}</p>
+            <strong>{{ formatMoney(house.rent) }}</strong>
+            <span>{{ house.layout || "户型待补充" }} · {{ formatArea(house.area) }}</span>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="page-shell home-section">
-      <div class="section-head home-section__head">
-        <div>
-          <h2 class="page-title page-title--section">常用入口</h2>
-        </div>
-        <RouterLink class="secondary-button" to="/houses">查看房源</RouterLink>
-      </div>
-
-      <div class="home-action-grid">
-        <RouterLink class="home-action-card" to="/houses">
-          <span class="tag">找房</span>
-          <h3 class="house-title house-title--small">浏览房源</h3>
-          <p class="page-text">按城市、区域、户型和租金筛选。</p>
-        </RouterLink>
-        <RouterLink class="home-action-card" to="/register">
-          <span class="tag tag--light">账户</span>
-          <h3 class="house-title house-title--small">选择身份</h3>
-          <p class="page-text">租客看房，房东发布房源。</p>
-        </RouterLink>
-        <RouterLink class="home-action-card" to="/news">
-          <span class="tag">公告</span>
-          <h3 class="house-title house-title--small">查看通知</h3>
-          <p class="page-text">了解房源维护和平台服务信息。</p>
         </RouterLink>
       </div>
-    </div>
 
-    <div class="feature-split home-feature">
-      <article class="feature-main">
-        <div class="feature-image">
-          <img
-            src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2670&auto=format&fit=crop"
-            alt="精选住宅室内空间"
-          />
+      <div v-else-if="featuredLoading" class="apt-featured-grid apt-featured-grid--loading">
+        <div v-for="index in 4" :key="index" class="apt-featured-card apt-featured-card--skeleton">
+          <div />
+          <section />
         </div>
-        <h2 class="page-title page-title--section">信息清楚，操作便捷</h2>
-        <p class="page-text">
-          每套房源展示价格、户型、面积、位置和状态。登录后可以预约看房、联系房东，并查看合同和账单。
-        </p>
+      </div>
+
+      <RouterLink class="apt-view-more" to="/houses">View More</RouterLink>
+    </section>
+
+    <section class="apt-simple-band">
+      <article>
+        <strong>更多房源</strong>
+        <span>集中展示价格、户型、面积和位置。</span>
       </article>
-
-      <aside class="feature-side">
-        <div class="dispatch-list">
-          <article>
-            <span class="editorial-label">房源</span>
-            <h3 class="house-title house-title--small">公开展示</h3>
-            <p class="page-text">房东发布后，租客可按条件查找。</p>
-          </article>
-          <article>
-            <span class="editorial-label">看房</span>
-            <h3 class="house-title house-title--small">预约沟通</h3>
-            <p class="page-text">租客提交时间，房东在控制台处理。</p>
-          </article>
-          <div class="dark-panel">
-            <span class="editorial-label">房源大厅</span>
-            <h3 class="house-title house-title--small">开始浏览</h3>
-            <p class="page-text">直接查看当前可浏览的房源。</p>
-            <RouterLink class="primary-button" to="/houses">查看房源</RouterLink>
-          </div>
-        </div>
-      </aside>
-    </div>
+      <article>
+        <strong>筛选更快</strong>
+        <span>预算、户型、区域都放在列表页顶部。</span>
+      </article>
+      <article>
+        <strong>直接沟通</strong>
+        <span>进入详情后预约看房或联系房东。</span>
+      </article>
+    </section>
   </section>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+
+import { resolveAssetUrl } from "../../api/assets";
+import { fetchHouseList } from "../../api/house";
 
 const keyword = ref("");
 const router = useRouter();
+const featuredHouses = ref([]);
+const featuredLoading = ref(false);
+const featuredError = ref("");
+
+const fallbackImages = [
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200&auto=format&fit=crop",
+];
+
+const quickSearches = [
+  { label: "公寓", query: { keyword: "公寓" } },
+  { label: "整租", query: { keyword: "整租" } },
+  { label: "¥5000 以下", query: { max_rent: "5000" } },
+  { label: "两室一厅", query: { layout: "2室1厅" } },
+];
+
+const entries = [
+  { title: "按城市找", text: "输入城市或区域进入搜索结果。", to: "/houses" },
+  { title: "按预算找", text: "先筛掉不合适的租金范围。", to: "/houses?max_rent=5000" },
+  { title: "按户型找", text: "快速查看一居、两居或三居。", to: "/houses?layout=2室1厅" },
+  { title: "发布房源", text: "房东注册后进入控制台管理。", to: "/register" },
+];
+
+const featuredTitle = "精选租房推荐";
 
 function goExplore() {
   router.push({
@@ -105,4 +127,42 @@ function goExplore() {
     query: keyword.value ? { keyword: keyword.value } : {},
   });
 }
+
+function quickSearch(query) {
+  router.push({ path: "/houses", query });
+}
+
+function getHouseImage(house, index) {
+  return house.cover_url ? resolveAssetUrl(house.cover_url) : fallbackImages[index % fallbackImages.length];
+}
+
+function formatAddress(house) {
+  return [house.community, house.address_detail, house.district, house.city].filter(Boolean).join("，") || "地址待补充";
+}
+
+function formatArea(area) {
+  return area ? `${Number(area).toLocaleString("zh-CN", { maximumFractionDigits: 0 })} 平方米` : "面积待补充";
+}
+
+function formatMoney(value) {
+  return `¥${Number(value || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 })} / 月`;
+}
+
+async function loadFeaturedHouses() {
+  featuredLoading.value = true;
+  featuredError.value = "";
+  try {
+    const response = await fetchHouseList({ page: 1, page_size: 4 });
+    featuredHouses.value = response.data.data.items;
+  } catch (error) {
+    featuredError.value = error.message || "精选房源加载失败。";
+    featuredHouses.value = [];
+  } finally {
+    featuredLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  loadFeaturedHouses();
+});
 </script>

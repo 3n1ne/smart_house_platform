@@ -1,186 +1,124 @@
 <template>
-  <section class="page-shell">
-    <div class="stack-section">
-      <header class="section-head">
-        <div>
-          <span class="eyebrow">房源大厅</span>
-          <h1 class="page-title">精选房源</h1>
-          <p class="page-text">按城市、区域、户型和租金筛选正在开放的房源。</p>
-        </div>
-        <RouterLink class="secondary-button" to="/">返回首页</RouterLink>
-      </header>
+  <section class="apt-search-page">
+    <form class="apt-toolbar" @submit.prevent="submitSearch">
+      <div class="apt-toolbar__search">
+        <input v-model.trim="filters.keyword" type="text" placeholder="城市、区域、小区或地址" />
+        <button type="submit">搜索</button>
+      </div>
 
-      <form class="page-card filter-grid" @submit.prevent="loadHouses">
-        <label class="field">
+      <div class="apt-filter-row">
+        <label>
           <span>城市</span>
-          <input v-model.trim="filters.city" type="text" placeholder="例如：杭州" />
+          <select v-model="filters.city" @change="handleCityChange">
+            <option value="">不限</option>
+            <option v-for="city in cityOptions" :key="city" :value="city">{{ city }}</option>
+          </select>
         </label>
-
-        <label class="field">
+        <label>
           <span>区域</span>
-          <input v-model.trim="filters.district" type="text" placeholder="例如：西湖区" />
+          <select v-model="filters.district">
+            <option value="">不限</option>
+            <option v-for="district in availableDistricts" :key="district" :value="district">
+              {{ district }}
+            </option>
+          </select>
         </label>
-
-        <label class="field">
+        <label>
           <span>户型</span>
-          <input v-model.trim="filters.layout" type="text" placeholder="例如：两室一厅" />
+          <select v-model="filters.layout">
+            <option value="">不限</option>
+            <option v-for="layout in layoutOptions" :key="layout" :value="layout">{{ layout }}</option>
+          </select>
         </label>
-
-        <label class="field">
-          <span>关键词</span>
-          <input v-model.trim="filters.keyword" type="text" placeholder="标题 / 小区 / 地址" />
+        <label class="apt-filter-row__rent">
+          <span>租金范围</span>
+          <input v-model.trim="rentRange" type="text" placeholder="如 3000-5000" />
         </label>
+        <button class="apt-filter-row__reset" type="button" @click="resetFilters">重置</button>
+      </div>
+    </form>
 
-        <label class="field">
-          <span>最低租金</span>
-          <input v-model.number="filters.min_rent" type="number" min="0" placeholder="3000" />
-        </label>
+    <div class="apt-filter-chips">
+      <button type="button" @click="applyBudget('', 3000)">¥3000 以下</button>
+      <button type="button" @click="applyBudget(3000, 5000)">¥3000-5000</button>
+      <button type="button" @click="applyBudget(5000, 8000)">¥5000-8000</button>
+      <button type="button" @click="applyLayout('1室1厅')">1室1厅</button>
+      <button type="button" @click="applyLayout('2室1厅')">2室1厅</button>
+      <button type="button" @click="applyLayout('3室2厅')">3室2厅</button>
+    </div>
 
-        <label class="field">
-          <span>最高租金</span>
-          <input v-model.number="filters.max_rent" type="number" min="0" placeholder="8000" />
-        </label>
+    <p v-if="errorMessage" class="form-message form-message--error">{{ errorMessage }}</p>
 
-        <div class="filter-actions filter-actions--full">
-          <button class="primary-button" type="submit" :disabled="loading">
-            {{ loading ? "加载中..." : "搜索房源" }}
+    <div class="apt-results-layout apt-results-layout--no-map">
+      <main class="apt-list-panel">
+        <header class="apt-list-head">
+          <div>
+            <h1>{{ total ? `${total} 套房源` : "搜索房源" }}</h1>
+            <p>{{ resultSubtitle }}</p>
+          </div>
+          <span>{{ loading ? "加载中" : `第 ${page} / ${totalPages} 页` }}</span>
+        </header>
+
+        <div v-if="activeFilterLabels.length" class="apt-active-filters">
+          <button
+            v-for="item in activeFilterLabels"
+            :key="item.key"
+            type="button"
+            @click="clearFilter(item.key)"
+          >
+            {{ item.label }} ×
           </button>
-          <button class="ghost-button" type="button" @click="resetFilters">重置</button>
-        </div>
-      </form>
-
-      <p v-if="errorMessage" class="form-message form-message--error">{{ errorMessage }}</p>
-
-      <section class="page-card search-insights">
-        <div class="section-head section-head--compact">
-          <div>
-            <span class="eyebrow">筛选建议</span>
-            <h2 class="page-title page-title--section">按地区和户型快速查看</h2>
-          </div>
-          <button class="ghost-button" type="button" :disabled="insightsLoading" @click="loadInsights">
-            {{ insightsLoading ? "刷新中..." : "刷新推荐" }}
-          </button>
         </div>
 
-        <p v-if="insightsError" class="form-message form-message--error">{{ insightsError }}</p>
-
-        <div class="insight-grid">
-          <div>
-            <span class="editorial-label">地区</span>
-            <div v-if="regions.length" class="insight-list">
-              <button
-                v-for="region in regions"
-                :key="`${region.city}-${region.district}-${region.community || 'all'}`"
-                class="insight-button"
-                type="button"
-                @click="applyRegion(region)"
-              >
-                <strong>{{ formatRegion(region) }}</strong>
-                <span>{{ region.house_count }} 套 | ¥{{ region.min_rent }} - ¥{{ region.max_rent }}</span>
-              </button>
-            </div>
-            <p v-else class="page-text">暂无地区数据。</p>
-          </div>
-
-          <div>
-            <span class="editorial-label">户型</span>
-            <div v-if="layouts.length" class="insight-list">
-              <button
-                v-for="layout in layouts"
-                :key="layout.layout"
-                class="insight-button"
-                type="button"
-                @click="applyLayout(layout.layout)"
-              >
-                <strong>{{ layout.layout }}</strong>
-                <span>{{ layout.house_count }} 套 | ¥{{ layout.min_rent }} - ¥{{ layout.max_rent }}</span>
-              </button>
-            </div>
-            <p v-else class="page-text">暂无户型数据。</p>
-          </div>
-        </div>
-
-        <div v-if="recommendations.length" class="recommendation-strip">
-          <span class="editorial-label">推荐房源</span>
-          <div class="house-grid house-grid--compact">
-            <RouterLink
-              v-for="house in recommendations"
-              :key="house.id"
-              class="house-card"
-              :to="`/houses/${house.id}`"
-            >
-              <div class="house-cover house-cover--compact">
-                <img v-if="house.cover_url" :src="resolveAssetUrl(house.cover_url)" :alt="house.title" />
-                <div v-else class="house-cover__placeholder">暂无图片</div>
-              </div>
-              <div class="house-content">
-                <div class="house-meta">
-                  <span class="tag">{{ house.layout || "户型待补充" }}</span>
-                  <span class="tag tag--light">{{ house.city }} {{ house.district }}</span>
-                </div>
-                <h3 class="house-title house-title--small">{{ house.title }}</h3>
-                <div class="house-footer">
-                  <strong class="price price--compact">¥{{ house.rent }}/月</strong>
-                  <span class="text-link">查看</span>
-                </div>
-              </div>
+        <div v-if="houses.length" class="apt-listings">
+          <article v-for="(house, index) in houses" :key="house.id" class="apt-listing-card">
+            <RouterLink class="apt-listing-card__media" :to="`/houses/${house.id}`">
+              <img v-if="house.cover_url" :src="resolveAssetUrl(house.cover_url)" :alt="house.title" />
+              <span v-else>暂无图片</span>
+              <em v-if="index === 0">新上架</em>
             </RouterLink>
-          </div>
+
+            <div class="apt-listing-card__body">
+              <div class="apt-listing-card__price">
+                <strong>{{ formatMoney(house.rent) }}</strong>
+                <span>/月</span>
+              </div>
+
+              <RouterLink class="apt-listing-card__title" :to="`/houses/${house.id}`">
+                {{ house.title }}
+              </RouterLink>
+
+              <p>{{ formatLocation(house) }}</p>
+
+              <div class="apt-listing-card__facts">
+                <span>{{ house.layout || "户型待补充" }}</span>
+                <span>{{ formatArea(house.area) }}</span>
+                <span>{{ house.orientation || "朝向待补充" }}</span>
+              </div>
+
+              <div class="apt-listing-card__actions">
+                <RouterLink :to="`/houses/${house.id}`">查看详情</RouterLink>
+                <span>{{ formatHouseStatus(house.status) }}</span>
+              </div>
+            </div>
+          </article>
         </div>
-      </section>
 
-      <div v-if="houses.length" class="house-grid">
-        <RouterLink
-          v-for="(house, index) in houses"
-          :key="house.id"
-          class="house-card"
-          :to="`/houses/${house.id}`"
-        >
-          <div class="house-cover">
-            <img v-if="house.cover_url" :src="resolveAssetUrl(house.cover_url)" :alt="house.title" />
-            <div v-else class="house-cover__placeholder">暂无图片</div>
-            <span v-if="index === 0" class="tag" style="position: absolute; top: 0; left: 0">
-              新上架
-            </span>
-          </div>
-          <div class="house-content">
-            <div class="house-meta">
-              <span class="tag">{{ house.layout || "户型待补充" }}</span>
-              <span class="tag tag--light">{{ house.city }} {{ house.district }}</span>
-            </div>
-            <h2 class="house-title">{{ house.title }}</h2>
-            <p class="house-address">{{ house.community || house.address_detail }}</p>
-            <div class="house-info-row">
-              <span>{{ house.area }} 平方米</span>
-              <span>{{ house.orientation || "朝向待补充" }}</span>
-            </div>
-            <div class="house-footer">
-              <strong class="price">¥{{ house.rent }}/月</strong>
-              <span class="text-link">查看详情</span>
-            </div>
-          </div>
-        </RouterLink>
-      </div>
+        <div v-else-if="!loading" class="page-card empty-card">
+          <h2 class="page-title page-title--section">暂无匹配房源</h2>
+          <p class="page-text">减少筛选条件，或稍后再试。</p>
+        </div>
 
-      <div v-else-if="!loading" class="page-card empty-card">
-        <h2 class="page-title page-title--section">暂无匹配房源</h2>
-        <p class="page-text">减少筛选条件，或稍后再试。</p>
-      </div>
-
-      <div class="pagination-bar">
-        <button class="ghost-button" type="button" :disabled="page <= 1 || loading" @click="changePage(page - 1)">
-          上一页
-        </button>
-        <span class="editorial-label">第 {{ page }} / {{ totalPages }} 页</span>
-        <button
-          class="ghost-button"
-          type="button"
-          :disabled="page >= totalPages || loading"
-          @click="changePage(page + 1)"
-        >
-          下一页
-        </button>
-      </div>
+        <div class="apt-pagination">
+          <button type="button" :disabled="page <= 1 || loading" @click="changePage(page - 1)">
+            上一页
+          </button>
+          <span>第 {{ page }} / {{ totalPages }} 页</span>
+          <button type="button" :disabled="page >= totalPages || loading" @click="changePage(page + 1)">
+            下一页
+          </button>
+        </div>
+      </main>
     </div>
   </section>
 </template>
@@ -189,13 +127,8 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
-import { fetchHouseList } from "../../api/house";
 import { resolveAssetUrl } from "../../api/assets";
-import {
-  fetchSearchLayouts,
-  fetchSearchRecommendations,
-  fetchSearchRegions,
-} from "../../api/search";
+import { fetchHouseList } from "../../api/house";
 
 const route = useRoute();
 const filters = reactive({
@@ -209,17 +142,103 @@ const filters = reactive({
 
 const loading = ref(false);
 const errorMessage = ref("");
-const insightsError = ref("");
 const houses = ref([]);
-const regions = ref([]);
-const layouts = ref([]);
-const recommendations = ref([]);
 const page = ref(1);
-const pageSize = ref(6);
+const pageSize = ref(8);
 const total = ref(0);
-const insightsLoading = ref(false);
+const rentRange = ref("");
+
+const cityOptions = [
+  "北京市",
+  "上海市",
+  "广州市",
+  "深圳市",
+  "杭州市",
+  "南京市",
+  "苏州市",
+  "成都市",
+  "重庆市",
+  "武汉市",
+  "西安市",
+  "天津市",
+  "郑州市",
+  "长沙市",
+  "青岛市",
+  "厦门市",
+  "合肥市",
+  "宁波市",
+  "佛山市",
+  "东莞市",
+];
+
+const districtOptionsByCity = {
+  北京市: ["朝阳区", "海淀区", "东城区", "西城区", "丰台区", "通州区", "昌平区", "大兴区"],
+  上海市: ["浦东新区", "徐汇区", "静安区", "黄浦区", "长宁区", "普陀区", "杨浦区", "闵行区"],
+  广州市: ["天河区", "越秀区", "海珠区", "荔湾区", "白云区", "番禺区", "黄埔区", "南沙区"],
+  深圳市: ["南山区", "福田区", "罗湖区", "宝安区", "龙岗区", "龙华区", "盐田区", "光明区"],
+  杭州市: ["西湖区", "上城区", "拱墅区", "滨江区", "萧山区", "余杭区", "钱塘区", "临平区"],
+  南京市: ["鼓楼区", "玄武区", "秦淮区", "建邺区", "栖霞区", "雨花台区", "江宁区", "浦口区"],
+  苏州市: ["姑苏区", "工业园区", "虎丘区", "吴中区", "相城区", "吴江区", "昆山市", "常熟市"],
+  成都市: ["锦江区", "青羊区", "金牛区", "武侯区", "成华区", "高新区", "双流区", "龙泉驿区"],
+  重庆市: ["渝中区", "江北区", "南岸区", "九龙坡区", "沙坪坝区", "渝北区", "巴南区", "北碚区"],
+  武汉市: ["江岸区", "江汉区", "武昌区", "洪山区", "汉阳区", "硚口区", "东西湖区", "东湖高新区"],
+  西安市: ["雁塔区", "碑林区", "莲湖区", "新城区", "未央区", "灞桥区", "长安区", "高新区"],
+  天津市: ["和平区", "河西区", "南开区", "河东区", "河北区", "红桥区", "滨海新区", "津南区"],
+  郑州市: ["金水区", "二七区", "中原区", "管城回族区", "惠济区", "郑东新区", "高新区", "经开区"],
+  长沙市: ["芙蓉区", "天心区", "岳麓区", "开福区", "雨花区", "望城区", "长沙县", "浏阳市"],
+  青岛市: ["市南区", "市北区", "崂山区", "李沧区", "黄岛区", "城阳区", "即墨区", "胶州市"],
+  厦门市: ["思明区", "湖里区", "集美区", "海沧区", "同安区", "翔安区"],
+  合肥市: ["蜀山区", "庐阳区", "包河区", "瑶海区", "高新区", "经开区", "滨湖新区", "肥西县"],
+  宁波市: ["海曙区", "江北区", "鄞州区", "镇海区", "北仑区", "奉化区", "慈溪市", "余姚市"],
+  佛山市: ["禅城区", "南海区", "顺德区", "三水区", "高明区"],
+  东莞市: ["南城街道", "东城街道", "莞城街道", "万江街道", "松山湖", "虎门镇", "长安镇", "厚街镇"],
+};
+
+const fallbackDistrictOptions = [
+  "朝阳区",
+  "浦东新区",
+  "天河区",
+  "南山区",
+  "西湖区",
+  "鼓楼区",
+  "工业园区",
+  "锦江区",
+];
+
+const layoutOptions = [
+  "开间",
+  "1室1厅",
+  "2室1厅",
+  "2室2厅",
+  "3室1厅",
+  "3室2厅",
+  "4室2厅",
+  "复式",
+  "别墅",
+  "两室一厅",
+];
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
+const availableDistricts = computed(() => districtOptionsByCity[filters.city] || fallbackDistrictOptions);
+const resultSubtitle = computed(() => {
+  const location = [filters.city, filters.district].filter(Boolean).join(" · ") || "全部区域";
+  return `${location} · ${filters.layout || "不限户型"} · ${formatRentRange(filters.min_rent, filters.max_rent)}`;
+});
+const activeFilterLabels = computed(() =>
+  [
+    { key: "city", label: filters.city && `城市：${filters.city}` },
+    { key: "district", label: filters.district && `区域：${filters.district}` },
+    { key: "keyword", label: filters.keyword && `关键词：${filters.keyword}` },
+    { key: "layout", label: filters.layout && `户型：${filters.layout}` },
+    { key: "rent", label: rentRange.value && `租金：${formatRentRange(filters.min_rent, filters.max_rent)}` },
+  ].filter((item) => item.label)
+);
+
+function submitSearch() {
+  page.value = 1;
+  applyRentRange();
+  loadHouses();
+}
 
 function buildParams() {
   return {
@@ -227,17 +246,6 @@ function buildParams() {
     page: page.value,
     page_size: pageSize.value,
   };
-}
-
-function buildInsightParams() {
-  return Object.fromEntries(
-    Object.entries({
-      city: filters.city,
-      district: filters.district,
-      layout: filters.layout,
-      keyword: filters.keyword,
-    }).filter(([, value]) => value !== "" && value !== null && value !== undefined)
-  );
 }
 
 async function loadHouses() {
@@ -255,30 +263,6 @@ async function loadHouses() {
   } finally {
     loading.value = false;
   }
-  loadInsights();
-}
-
-async function loadInsights() {
-  insightsLoading.value = true;
-  insightsError.value = "";
-  try {
-    const params = buildInsightParams();
-    const [regionResponse, layoutResponse, recommendationResponse] = await Promise.all([
-      fetchSearchRegions(params),
-      fetchSearchLayouts(params),
-      fetchSearchRecommendations({ city: filters.city || undefined, limit: 3 }),
-    ]);
-    regions.value = regionResponse.data.data.slice(0, 6);
-    layouts.value = layoutResponse.data.data.slice(0, 6);
-    recommendations.value = recommendationResponse.data.data;
-  } catch (error) {
-    insightsError.value = error.message || "智能搜索数据加载失败。";
-    regions.value = [];
-    layouts.value = [];
-    recommendations.value = [];
-  } finally {
-    insightsLoading.value = false;
-  }
 }
 
 function resetFilters() {
@@ -288,6 +272,7 @@ function resetFilters() {
   filters.keyword = "";
   filters.min_rent = "";
   filters.max_rent = "";
+  rentRange.value = "";
   page.value = 1;
   loadHouses();
 }
@@ -297,37 +282,125 @@ function changePage(nextPage) {
   loadHouses();
 }
 
-function applyRegion(region) {
-  filters.city = region.city || "";
-  filters.district = region.district || "";
-  filters.keyword = region.community || "";
+function applyBudget(minRent, maxRent) {
+  filters.min_rent = minRent;
+  filters.max_rent = maxRent;
+  rentRange.value = formatRentInput(minRent, maxRent);
   page.value = 1;
   loadHouses();
 }
 
 function applyLayout(layout) {
-  filters.layout = layout || "";
+  filters.layout = layout;
   page.value = 1;
   loadHouses();
 }
 
-function formatRegion(region) {
-  return [region.city, region.district, region.community].filter(Boolean).join(" / ");
+function clearFilter(key) {
+  if (key === "rent") {
+    filters.min_rent = "";
+    filters.max_rent = "";
+    rentRange.value = "";
+  } else {
+    filters[key] = "";
+    if (key === "city") {
+      filters.district = "";
+    }
+  }
+  page.value = 1;
+  loadHouses();
+}
+
+function handleCityChange() {
+  if (filters.district && !availableDistricts.value.includes(filters.district)) {
+    filters.district = "";
+  }
+}
+
+function formatLocation(house) {
+  return [house.city, house.district, house.community, house.address_detail].filter(Boolean).join(" · ") || "地址待补充";
+}
+
+function formatArea(area) {
+  return area ? `${Number(area).toLocaleString("zh-CN")} 平方米` : "面积待补充";
+}
+
+function formatMoney(value) {
+  if (value === "" || value === null || value === undefined) return "不限";
+  return `¥${Number(value).toLocaleString("zh-CN", { maximumFractionDigits: 0 })}`;
+}
+
+function formatRentRange(minRent, maxRent) {
+  if (minRent !== "" && maxRent !== "") return `${formatMoney(minRent)}-${formatMoney(maxRent)}`;
+  if (minRent !== "") return `${formatMoney(minRent)}以上`;
+  if (maxRent !== "") return `${formatMoney(maxRent)}以下`;
+  return "不限预算";
+}
+
+function formatRentInput(minRent, maxRent) {
+  if (minRent !== "" && maxRent !== "") return `${minRent}-${maxRent}`;
+  if (minRent !== "") return `${minRent}以上`;
+  if (maxRent !== "") return `${maxRent}以下`;
+  return "";
+}
+
+function applyRentRange() {
+  const normalized = rentRange.value.replace(/\s/g, "");
+  if (!normalized) {
+    filters.min_rent = "";
+    filters.max_rent = "";
+    return;
+  }
+
+  const betweenMatch = normalized.match(/^(\d+)(?:-|~|至|到)(\d+)$/);
+  if (betweenMatch) {
+    filters.min_rent = Number(betweenMatch[1]);
+    filters.max_rent = Number(betweenMatch[2]);
+    rentRange.value = `${filters.min_rent}-${filters.max_rent}`;
+    return;
+  }
+
+  const belowMatch = normalized.match(/^(\d+)(?:以下|以内|内)$/);
+  if (belowMatch) {
+    filters.min_rent = "";
+    filters.max_rent = Number(belowMatch[1]);
+    rentRange.value = `${filters.max_rent}以下`;
+    return;
+  }
+
+  const aboveMatch = normalized.match(/^(\d+)(?:以上|起)$/);
+  if (aboveMatch) {
+    filters.min_rent = Number(aboveMatch[1]);
+    filters.max_rent = "";
+    rentRange.value = `${filters.min_rent}以上`;
+    return;
+  }
+
+  const exactMatch = normalized.match(/^(\d+)$/);
+  if (exactMatch) {
+    filters.min_rent = "";
+    filters.max_rent = Number(exactMatch[1]);
+    rentRange.value = `${filters.max_rent}以下`;
+  }
+}
+
+function formatHouseStatus(status) {
+  return {
+    draft: "草稿",
+    available: "可租",
+    rented: "已出租",
+    repairing: "维修中",
+    offline: "已下架",
+  }[status] || status || "状态待补充";
 }
 
 onMounted(() => {
-  if (typeof route.query.keyword === "string") {
-    filters.keyword = route.query.keyword;
+  for (const key of ["keyword", "city", "district", "layout", "min_rent", "max_rent"]) {
+    if (typeof route.query[key] === "string") {
+      filters[key] = route.query[key];
+    }
   }
-  if (typeof route.query.city === "string") {
-    filters.city = route.query.city;
-  }
-  if (typeof route.query.district === "string") {
-    filters.district = route.query.district;
-  }
-  if (typeof route.query.layout === "string") {
-    filters.layout = route.query.layout;
-  }
+  rentRange.value = formatRentInput(filters.min_rent, filters.max_rent);
   loadHouses();
 });
 </script>

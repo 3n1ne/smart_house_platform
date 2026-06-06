@@ -24,6 +24,15 @@
 
         <form class="form-stack" @submit.prevent="handleSubmit">
           <label class="field">
+            <span>登录身份</span>
+            <select v-model="form.role">
+              <option v-for="role in roleOptions" :key="role.value" :value="role.value">
+                {{ role.label }}
+              </option>
+            </select>
+          </label>
+
+          <label class="field">
             <span>账号</span>
             <input v-model.trim="form.username" type="text" placeholder="用户名 / 邮箱 / 手机号" />
           </label>
@@ -71,6 +80,7 @@ const route = useRoute();
 const router = useRouter();
 
 const form = reactive({
+  role: "tenant",
   username: "",
   password: "",
   verification_code: "",
@@ -80,6 +90,12 @@ const submitting = ref(false);
 const codeSubmitting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+const roleOptions = [
+  { value: "tenant", label: "租客" },
+  { value: "landlord", label: "房东" },
+  { value: "admin", label: "管理员" },
+];
+const roleLabels = Object.fromEntries(roleOptions.map((role) => [role.value, role.label]));
 
 async function handleRequestCode() {
   errorMessage.value = "";
@@ -118,11 +134,18 @@ async function handleSubmit() {
 
   submitting.value = true;
   try {
-    await authStore.login({
+    const user = await authStore.login({
       username: form.username,
       password: form.password,
       verification_code: form.verification_code || undefined,
     });
+
+    if (user.role !== form.role) {
+      await authStore.logout();
+      errorMessage.value = `当前账号是${roleLabels[user.role] || "未知身份"}，不是${roleLabels[form.role]}。请切换身份后再登录。`;
+      return;
+    }
+
     successMessage.value = "登录成功，正在跳转。";
     const redirect = route.query.redirect;
     const fallbackRoute = authStore.dashboardRoute || "/";

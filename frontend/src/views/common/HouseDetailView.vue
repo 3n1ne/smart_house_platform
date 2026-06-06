@@ -1,5 +1,5 @@
 <template>
-  <section class="page-shell">
+  <section class="rental-detail-page">
     <div v-if="loading" class="page-card empty-card">
       <h1 class="page-title page-title--section">正在加载房源详情</h1>
       <p class="page-text">正在获取最新的房源信息。</p>
@@ -11,79 +11,113 @@
       <RouterLink class="secondary-button" to="/houses">返回房源列表</RouterLink>
     </div>
 
-    <div v-else-if="house" class="stack-section">
-      <section class="detail-cover">
-        <img v-if="primaryMedia" :src="resolveAssetUrl(primaryMedia.file_url)" :alt="house.title" />
-        <div v-else class="house-cover__placeholder house-cover__placeholder--large">暂无图片</div>
-      </section>
-
-      <div v-if="gallery.length" class="gallery-grid">
-        <div v-for="item in gallery" :key="item.id" class="gallery-item">
-          <img v-if="item.media_type === 'image'" :src="resolveAssetUrl(item.file_url)" :alt="house.title" />
-          <div v-else class="gallery-video">视频</div>
-        </div>
+    <template v-else-if="house">
+      <div class="listing-detail-nav">
+        <RouterLink class="text-link" to="/houses">返回房源列表</RouterLink>
+        <span>房源编号 {{ String(house.id).padStart(3, "0") }}</span>
       </div>
 
-      <div class="detail-grid">
-        <article class="stack-section">
-          <section class="page-card page-card--flat detail-card">
-            <span class="eyebrow">房源编号 {{ String(house.id).padStart(3, "0") }}</span>
-            <h1 class="page-title">{{ house.title }}</h1>
-            <p class="house-address">{{ fullAddress }}</p>
+      <section class="listing-gallery">
+        <div class="listing-gallery__main">
+          <img
+            v-if="primaryMedia && primaryMedia.media_type === 'image'"
+            :src="resolveAssetUrl(primaryMedia.file_url)"
+            :alt="house.title"
+          />
+          <div v-else class="house-cover__placeholder house-cover__placeholder--large">暂无图片</div>
+        </div>
+        <div class="listing-gallery__side">
+          <div v-for="index in 4" :key="index" class="listing-gallery__tile">
+            <img
+              v-if="galleryPreview[index - 1]?.media_type === 'image'"
+              :src="resolveAssetUrl(galleryPreview[index - 1].file_url)"
+              :alt="house.title"
+            />
+            <div v-else class="house-cover__placeholder">暂无图片</div>
+          </div>
+        </div>
+      </section>
 
-            <p class="price price--large">¥{{ house.rent }}<span class="editorial-label"> / 月</span></p>
-
-            <div class="detail-badges">
-              <span class="tag">{{ house.layout || "户型待补充" }}</span>
-              <span class="tag tag--light">{{ house.area }} 平方米</span>
-              <span class="tag tag--light">{{ formatHouseStatus(house.status) }}</span>
-            </div>
-
-            <div class="detail-list">
-              <div class="detail-row">
-                <span>押金</span>
-                <strong>¥{{ house.deposit || 0 }}</strong>
-              </div>
-              <div class="detail-row">
-                <span>装修</span>
-                <strong>{{ house.decoration || "未提供" }}</strong>
-              </div>
-              <div class="detail-row">
-                <span>朝向</span>
-                <strong>{{ house.orientation || "未提供" }}</strong>
-              </div>
-              <div class="detail-row">
-                <span>楼层</span>
-                <strong>{{ formatFloor(house.floor, house.total_floors) }}</strong>
-              </div>
-              <div class="detail-row">
-                <span>房东</span>
-                <strong>{{ house.landlord?.real_name || house.landlord?.username || "个人房东" }}</strong>
-              </div>
-              <div class="detail-row">
-                <span>类型</span>
-                <strong>{{ house.house_type || "住宅" }}</strong>
-              </div>
-            </div>
-
+      <div class="listing-detail-layout">
+        <main class="listing-detail-main">
+          <section class="listing-headline">
             <div>
-              <span class="eyebrow">房源描述</span>
-              <p class="page-text detail-description">
-                {{ house.description || "该房源暂未补充更多描述。" }}
-              </p>
+              <div class="detail-badges">
+                <span class="tag">{{ formatHouseStatus(house.status) }}</span>
+                <span class="tag tag--light">{{ house.house_type || "住宅" }}</span>
+                <span class="tag tag--light">{{ house.layout || "户型待补充" }}</span>
+              </div>
+              <h1 class="page-title">{{ house.title }}</h1>
+              <p class="house-address">{{ fullAddress || "地址待补充" }}</p>
             </div>
-
-            <div class="detail-actions">
-              <RouterLink class="secondary-button" to="/houses">返回列表</RouterLink>
-              <RouterLink v-if="!authStore.isAuthenticated" class="primary-button" to="/login">
-                登录后预约
-              </RouterLink>
+            <div class="listing-headline__price">
+              <strong>{{ formatMoney(house.rent) }}</strong>
+              <span>/ 月</span>
             </div>
           </section>
-        </article>
 
-        <aside class="stack-section">
-          <div class="page-card booking-panel">
+          <section class="listing-stat-grid">
+            <article>
+              <span>面积</span>
+              <strong>{{ formatArea(house.area) }}</strong>
+            </article>
+            <article>
+              <span>楼层</span>
+              <strong>{{ formatFloor(house.floor, house.total_floors) }}</strong>
+            </article>
+            <article>
+              <span>朝向</span>
+              <strong>{{ house.orientation || "未提供" }}</strong>
+            </article>
+            <article>
+              <span>押金</span>
+              <strong>{{ formatMoney(house.deposit || 0) }}</strong>
+            </article>
+          </section>
+
+          <section class="listing-section">
+            <span class="eyebrow">房源描述</span>
+            <h2 class="page-title page-title--section">房子和入住信息</h2>
+            <p class="page-text detail-description">
+              {{ house.description || "该房源暂未补充更多描述。" }}
+            </p>
+          </section>
+
+          <section class="listing-section">
+            <span class="eyebrow">核心信息</span>
+            <div class="listing-fact-grid">
+              <div v-for="item in listingFacts" :key="item.label" class="detail-row">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="listing-section listing-map-summary">
+            <div>
+              <span class="eyebrow">周边位置</span>
+              <h2 class="page-title page-title--section">{{ house.community || house.district || "位置概览" }}</h2>
+              <p class="page-text">{{ fullAddress || "房东暂未补充详细地址。" }}</p>
+            </div>
+            <div class="listing-map-summary__canvas">
+              <span>{{ house.district || house.city || "位置" }}</span>
+            </div>
+          </section>
+        </main>
+
+        <aside class="listing-action-rail">
+          <div class="listing-action-card">
+            <div class="listing-action-card__price">
+              <strong>{{ formatMoney(house.rent) }}</strong>
+              <span>/ 月</span>
+            </div>
+            <p>{{ house.layout || "户型待补充" }} · {{ formatArea(house.area) }} · {{ house.district || "区域待补充" }}</p>
+            <RouterLink v-if="!authStore.isAuthenticated" class="primary-button" to="/login">
+              登录后预约
+            </RouterLink>
+          </div>
+
+          <div class="listing-action-card">
             <div class="section-head section-head--compact">
               <div>
                 <span class="eyebrow">看房预约</span>
@@ -119,7 +153,7 @@
             </div>
           </div>
 
-          <div class="page-card booking-panel">
+          <div class="listing-action-card">
             <div class="section-head section-head--compact">
               <div>
                 <span class="eyebrow">在线沟通</span>
@@ -151,7 +185,7 @@
           </div>
         </aside>
       </div>
-    </div>
+    </template>
   </section>
 </template>
 
@@ -184,8 +218,9 @@ const messageForm = reactive({
   content: "",
 });
 
-const primaryMedia = computed(() => house.value?.media_items?.[0] || null);
-const gallery = computed(() => house.value?.media_items?.slice(1) || []);
+const allMedia = computed(() => house.value?.media_items || []);
+const primaryMedia = computed(() => allMedia.value[0] || null);
+const galleryPreview = computed(() => allMedia.value.slice(1, 5));
 const fullAddress = computed(() =>
   [
     house.value?.province,
@@ -197,6 +232,14 @@ const fullAddress = computed(() =>
     .filter(Boolean)
     .join(" ")
 );
+const listingFacts = computed(() => [
+  { label: "小区", value: house.value?.community || "未提供" },
+  { label: "城市区域", value: [house.value?.city, house.value?.district].filter(Boolean).join(" / ") || "未提供" },
+  { label: "装修", value: house.value?.decoration || "未提供" },
+  { label: "类型", value: house.value?.house_type || "住宅" },
+  { label: "房东", value: house.value?.landlord?.real_name || house.value?.landlord?.username || "个人房东" },
+  { label: "状态", value: formatHouseStatus(house.value?.status) },
+]);
 const canBook = computed(
   () =>
     authStore.isAuthenticated &&
@@ -231,6 +274,14 @@ function formatFloor(floor, totalFloors) {
   return `${floor} / ${totalFloors}`;
 }
 
+function formatArea(area) {
+  return area ? `${Number(area).toLocaleString("zh-CN")} 平方米` : "面积待补充";
+}
+
+function formatMoney(value) {
+  return `¥${Number(value || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 })}`;
+}
+
 function formatHouseStatus(status) {
   return {
     draft: "草稿",
@@ -238,7 +289,7 @@ function formatHouseStatus(status) {
     rented: "已出租",
     repairing: "维修中",
     offline: "已下架",
-  }[status] || status;
+  }[status] || status || "状态待补充";
 }
 
 async function loadHouseDetail() {

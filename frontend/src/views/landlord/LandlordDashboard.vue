@@ -35,8 +35,8 @@
         </div>
       </div>
 
-      <div v-show="activeSection === 'houses'" class="dashboard-grid workspace-panel">
-        <div class="page-card">
+      <div v-show="activeSection === 'houses'" class="landlord-houses-layout workspace-panel">
+        <div class="page-card landlord-editor-card">
           <div class="section-head section-head--compact">
             <div>
               <span class="eyebrow">房源编辑</span>
@@ -131,7 +131,7 @@
           <p v-if="errors.houseForm" class="form-message form-message--error">{{ errors.houseForm }}</p>
         </div>
 
-        <div class="page-card">
+        <div class="page-card landlord-list-card">
           <div class="section-head section-head--compact">
             <div>
               <span class="eyebrow">我的房源</span>
@@ -164,8 +164,8 @@
 
           <p v-if="errors.houses" class="form-message form-message--error">{{ errors.houses }}</p>
 
-          <div v-if="houses.length" class="manage-list">
-            <article v-for="house in houses" :key="house.id" class="manage-item">
+          <div v-if="houses.length" class="manage-list landlord-house-list">
+            <article v-for="house in houses" :key="house.id" class="manage-item landlord-house-card">
               <div class="manage-item__main">
                 <div class="house-meta">
                   <span class="tag">{{ formatHouseStatus(house.status) }}</span>

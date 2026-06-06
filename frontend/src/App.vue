@@ -4,23 +4,18 @@
       <div class="topbar__inner">
         <RouterLink class="brand" to="/">
           <span class="brand__mark">租</span>
-          <span>
-            <span class="brand__name">智慧租房</span>
-          </span>
+          <span class="brand__name">智慧租房</span>
         </RouterLink>
 
         <nav class="topbar__nav">
+          <RouterLink class="nav-link nav-link--muted" to="/houses">租客工具</RouterLink>
           <RouterLink class="nav-link" to="/houses">房源</RouterLink>
           <RouterLink class="nav-link" to="/news">公告</RouterLink>
           <RouterLink v-if="!authStore.isAuthenticated" class="nav-link" to="/login">
-            登录
+            登录 / 注册
           </RouterLink>
-          <RouterLink
-            v-if="!authStore.isAuthenticated"
-            class="nav-link nav-link--strong"
-            to="/register"
-          >
-            注册
+          <RouterLink v-if="!authStore.isAuthenticated" class="nav-link nav-link--strong" to="/register">
+            发布房源
           </RouterLink>
           <RouterLink
             v-if="authStore.dashboardRoute"
