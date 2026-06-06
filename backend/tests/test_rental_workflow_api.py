@@ -72,8 +72,8 @@ def test_booking_contract_and_payment_workflow(client):
     payments_response = client.get("/api/payments/mine", headers=tenant_headers)
     assert payments_response.status_code == 200
     payments = payments_response.get_json()["data"]["items"]
-    assert len(payments) == 2
-    assert {payment["payment_type"] for payment in payments} == {"deposit", "rent"}
+    assert len(payments) == 1
+    assert payments[0]["payment_type"] == "rent"
 
     pay_response = client.patch(
         f"/api/payments/{payments[0]['id']}/pay",

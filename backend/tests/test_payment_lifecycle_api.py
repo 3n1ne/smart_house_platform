@@ -56,13 +56,12 @@ def _create_signed_contract_payments(client):
 
     client.patch(f"/api/contracts/{contract['id']}/sign", headers=tenant_headers)
     payments = client.get("/api/payments/mine", headers=tenant_headers).get_json()["data"]["items"]
-    return landlord_headers, tenant_headers, payments
+    return landlord_headers, tenant_headers, payments, contract
 
 
 def test_payment_can_be_paid_refunded_marked_overdue_and_failed(client, app):
-    landlord_headers, tenant_headers, payments = _create_signed_contract_payments(client)
+    landlord_headers, tenant_headers, payments, contract = _create_signed_contract_payments(client)
     paid_payment_id = payments[0]["id"]
-    overdue_payment_id = payments[1]["id"]
 
     pay_response = client.patch(
         f"/api/payments/{paid_payment_id}/pay",
@@ -83,9 +82,18 @@ def test_payment_can_be_paid_refunded_marked_overdue_and_failed(client, app):
     assert refund_response.get_json()["data"]["status"] == "refunded"
 
     with app.app_context():
-        payment = db.session.get(Payment, overdue_payment_id)
-        payment.due_date = utc_now().date() - timedelta(days=1)
+        overdue_payment = Payment(
+            contract_id=contract["id"],
+            payer_id=contract["tenant_id"],
+            payee_id=contract["landlord_id"],
+            amount=contract["monthly_rent"],
+            payment_type="rent",
+            due_date=utc_now().date() - timedelta(days=1),
+            status="pending",
+        )
+        db.session.add(overdue_payment)
         db.session.commit()
+        overdue_payment_id = overdue_payment.id
 
     overdue_response = client.post("/api/payments/overdue-scan", headers=landlord_headers)
     assert overdue_response.status_code == 200

@@ -42,30 +42,17 @@ def _create_initial_payments(contract):
     if existing_count:
         return
 
-    new_payments = []
-    if contract.deposit and float(contract.deposit) > 0:
-        new_payments.append(
-            Payment(
-                contract_id=contract.id,
-                payer_id=contract.tenant_id,
-                payee_id=contract.landlord_id,
-                amount=contract.deposit,
-                payment_type="deposit",
-                due_date=contract.start_date,
-                status="pending",
-            )
+    db.session.add(
+        Payment(
+            contract_id=contract.id,
+            payer_id=contract.tenant_id,
+            payee_id=contract.landlord_id,
+            amount=contract.monthly_rent,
+            payment_type="rent",
+            due_date=contract.start_date,
+            status="pending",
         )
-    first_rent_payment = Payment(
-        contract_id=contract.id,
-        payer_id=contract.tenant_id,
-        payee_id=contract.landlord_id,
-        amount=contract.monthly_rent,
-        payment_type="rent",
-        due_date=contract.start_date,
-        status="pending",
     )
-    new_payments.append(first_rent_payment)
-    db.session.add_all(new_payments)
 
 
 @contract_bp.post("")
