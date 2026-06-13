@@ -283,6 +283,7 @@
           <p class="page-text">租客或房东提交的投诉会显示在这里。</p>
         </div>
       </div>
+      <AccountSettings v-show="activeSection === 'account'" />
       </div>
     </div>
   </section>
@@ -291,6 +292,7 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
 
+import AccountSettings from "../../components/AccountSettings.vue";
 import NewsManager from "../../components/NewsManager.vue";
 import { fetchMyComplaints, updateComplaintStatus } from "../../api/complaint";
 import { fetchMonitorOverview } from "../../api/monitor";
@@ -302,6 +304,7 @@ const adminSections = [
   { key: "news", label: "公告管理" },
   { key: "users", label: "用户管理" },
   { key: "complaints", label: "投诉处理" },
+  { key: "account", label: "账号设置" },
 ];
 
 const activeSection = ref("overview");

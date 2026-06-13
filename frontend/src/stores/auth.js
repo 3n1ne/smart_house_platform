@@ -34,6 +34,10 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  function setUser(userInfo) {
+    user.value = userInfo;
+  }
+
   async function initialize() {
     if (initialized.value) {
       return;
@@ -82,6 +86,7 @@ export const useAuthStore = defineStore("auth", () => {
     isAuthenticated,
     login,
     logout,
+    setUser,
     token,
     user,
   };

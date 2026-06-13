@@ -490,6 +490,7 @@
         description="查看房东回复、处理未读消息，并直接继续沟通。"
         empty-text="可以从房源详情页发起第一条咨询。"
       />
+      <AccountSettings v-show="activeSection === 'account'" />
       </div>
     </div>
   </section>
@@ -498,6 +499,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
 
+import AccountSettings from "../../components/AccountSettings.vue";
 import MessageCenter from "../../components/MessageCenter.vue";
 import { fetchMyBookings, updateBookingStatus } from "../../api/booking";
 import { createComplaint, fetchMyComplaints } from "../../api/complaint";
@@ -514,6 +516,7 @@ const tenantSections = [
   { key: "requests", label: "服务提交" },
   { key: "progress", label: "处理进度" },
   { key: "messages", label: "消息中心" },
+  { key: "account", label: "账号设置" },
 ];
 
 const activeSection = ref("overview");

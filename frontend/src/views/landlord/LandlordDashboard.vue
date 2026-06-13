@@ -515,6 +515,7 @@
         description="查看未读咨询，并直接回复租客。"
         empty-text="租客从房源页联系你后，会话会显示在这里。"
       />
+      <AccountSettings v-show="activeSection === 'account'" />
       </div>
     </div>
   </section>
@@ -523,6 +524,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
 
+import AccountSettings from "../../components/AccountSettings.vue";
 import MessageCenter from "../../components/MessageCenter.vue";
 import NewsManager from "../../components/NewsManager.vue";
 import { resolveAssetUrl } from "../../api/assets";
@@ -547,6 +549,7 @@ const landlordSections = [
   { key: "operations", label: "收款维修" },
   { key: "news", label: "公告管理" },
   { key: "messages", label: "消息中心" },
+  { key: "account", label: "账号设置" },
 ];
 
 const activeSection = ref("houses");
